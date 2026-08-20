@@ -1,12 +1,23 @@
-from flask import Flask, jsonify, render_template, request
 import sqlite3
+import unicodedata
+from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
+
+
+def strip_accents(s):
+    if not s:
+        return ""
+    return "".join(
+        c for c in unicodedata.normalize("NFD", str(s))
+        if unicodedata.category(c) != "Mn"
+    ).lower()
 
 
 def get_db():
     conn = sqlite3.connect("./databases/cours_ens.db")
     conn.row_factory = sqlite3.Row
+    conn.create_function("STRIP_ACCENTS", 1, strip_accents)
     return conn
 
 
@@ -19,8 +30,10 @@ def index():
 def api_courses():
     query = request.args.get("q", "").strip()
     dept = request.args.get("dept", "").strip()
+    type_cours = request.args.get("type", "").strip()
     periode = request.args.get("periode", "").strip()
     jour = request.args.get("jour", "").strip()
+
     conn = get_db()
     sql = """
         SELECT DISTINCT c.id, c.departement, c.titre, c.type, c.ects, c.volume_horaire,
@@ -34,28 +47,44 @@ def api_courses():
         WHERE 1=1
     """
     params = []
+
     if query:
-        sql += " AND (c.titre LIKE ? OR p.nom LIKE ? OR c.departement LIKE ?)"
-        params.extend([f"%{query}%", f"%{query}%", f"%{query}%"])
+        sql += " AND (STRIP_ACCENTS(c.titre) LIKE ? OR STRIP_ACCENTS(p.nom) LIKE ? OR STRIP_ACCENTS(c.departement) LIKE ?)"
+        q_norm = f"%{strip_accents(query)}%"
+        params.extend([q_norm, q_norm, q_norm])
     if dept:
         sql += " AND c.departement = ?"
         params.append(dept)
+    if type_cours:
+        sql += " AND STRIP_ACCENTS(c.type) LIKE ?"
+        params.append(f"%{strip_accents(type_cours)}%")
     if periode:
-        sql += " AND c.periode LIKE ?"
-        params.append(f"%{periode}%")
+        sql += " AND STRIP_ACCENTS(c.periode) LIKE ?"
+        params.append(f"%{strip_accents(periode)}%")
     if jour:
-        sql += " AND s.jour = ?"
-        params.append(jour)
+        sql += " AND STRIP_ACCENTS(s.jour) = ?"
+        params.append(strip_accents(jour))
+
     sql += " GROUP BY c.id ORDER BY c.departement, c.titre"
     rows = conn.execute(sql, params).fetchall()
+
     depts = [
         r[0]
         for r in conn.execute(
-            "SELECT DISTINCT departement FROM courses WHERE departement != '' ORDER BY departement"
+            "SELECT DISTINCT departement FROM courses WHERE departement != '' AND departement IS NOT NULL ORDER BY departement"
         ).fetchall()
     ]
+    types = [
+        r[0]
+        for r in conn.execute(
+            "SELECT DISTINCT type FROM courses WHERE type != '' AND type IS NOT NULL AND type != '-' ORDER BY type"
+        ).fetchall()
+    ]
+
     conn.close()
-    return jsonify(courses=[dict(r) for r in rows], departments=depts)
+    return jsonify(
+        courses=[dict(r) for r in rows], departments=depts, types=types
+    )
 
 
 if __name__ == "__main__":
