@@ -1,30 +1,24 @@
 import sqlite3
 import unicodedata
+import os
 from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
-
+DB_PATH = os.path.join(os.path.dirname(__file__), "databases", "cours_ens.db")
 
 def strip_accents(s):
-    if not s:
-        return ""
-    return "".join(
-        c for c in unicodedata.normalize("NFD", str(s))
-        if unicodedata.category(c) != "Mn"
-    ).lower()
-
+    if not s: return ""
+    return "".join(c for c in unicodedata.normalize("NFD", str(s)) if unicodedata.category(c) != "Mn").lower()
 
 def get_db():
-    conn = sqlite3.connect("./databases/cours_ens.db")
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.create_function("STRIP_ACCENTS", 1, strip_accents)
     return conn
 
-
 @app.route("/")
 def index():
     return render_template("index.html")
-
 
 @app.route("/api/courses")
 def api_courses():
@@ -34,12 +28,21 @@ def api_courses():
     periode = request.args.get("periode", "").strip()
     jour = request.args.get("jour", "").strip()
 
-    conn = get_db()
     sql = """
         SELECT DISTINCT c.id, c.departement, c.titre, c.type, c.ects, c.volume_horaire,
                c.periode, c.code_ue, c.lien, c.notes,
                GROUP_CONCAT(DISTINCT p.nom) as professeurs,
-               s.jour, s.heure_debut, s.heure_fin, s.lieu, s.horaire_brut
+               GROUP_CONCAT(DISTINCT s.jour) as jour,
+               GROUP_CONCAT(DISTINCT s.horaire_brut) as horaire_brut,
+               GROUP_CONCAT(DISTINCT s.lieu) as lieu,
+               GROUP_CONCAT(DISTINCT 
+                   COALESCE(
+                       CASE WHEN s.jour IS NOT NULL AND s.heure_debut IS NOT NULL 
+                       THEN s.jour || ' (' || s.heure_debut || '-' || s.heure_fin || ')' END,
+                       s.horaire_brut, 
+                       s.jour
+                   )
+               ) as horaire_affichage
         FROM courses c
         LEFT JOIN course_professors cp ON c.id = cp.course_id
         LEFT JOIN professors p ON cp.professor_id = p.id
@@ -66,26 +69,14 @@ def api_courses():
         params.append(strip_accents(jour))
 
     sql += " GROUP BY c.id ORDER BY c.departement, c.titre"
-    rows = conn.execute(sql, params).fetchall()
 
-    depts = [
-        r[0]
-        for r in conn.execute(
-            "SELECT DISTINCT departement FROM courses WHERE departement != '' AND departement IS NOT NULL ORDER BY departement"
-        ).fetchall()
-    ]
-    types = [
-        r[0]
-        for r in conn.execute(
-            "SELECT DISTINCT type FROM courses WHERE type != '' AND type IS NOT NULL AND type != '-' ORDER BY type"
-        ).fetchall()
-    ]
+    # Context manager pour auto-close la DB
+    with get_db() as conn:
+        rows = conn.execute(sql, params).fetchall()
+        depts = [r[0] for r in conn.execute("SELECT DISTINCT departement FROM courses WHERE departement != '' AND departement IS NOT NULL ORDER BY departement").fetchall()]
+        types = [r[0] for r in conn.execute("SELECT DISTINCT type FROM courses WHERE type != '' AND type IS NOT NULL AND type != '-' ORDER BY type").fetchall()]
 
-    conn.close()
-    return jsonify(
-        courses=[dict(r) for r in rows], departments=depts, types=types
-    )
-
+    return jsonify(courses=[dict(r) for r in rows], departments=depts, types=types)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

@@ -1,230 +1,216 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Catalogue des cours — ENS</title>
-  <style>
-    @keyframes cardSpawn {
-      from {
-        opacity: 0;
-        transform: translateY(-8px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .card-spawn {
-      animation: cardSpawn 0.15s ease-out forwards;
-    }
-  </style>
+  <title>PluriENS</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='ens-ulm-logo.png') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: {
+      fontFamily: { serif: ['"Cormorant Garamond"', 'serif'], sans: ['Inter', 'sans-serif'] },
+      colors: { paper: '#FDFBF7', ink: '#1C1917', bordeaux: '#8A1538', bord: '#E7E5E4' }
+    }}}
+  </script>
+  <style>
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
+    .entry-spawn { animation: fadeIn 0.2s ease-out forwards; }
+    select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 0.25rem center; background-size: 1em; }
+  </style>
 </head>
-
-<body class="bg-slate-50 text-slate-800 min-h-screen">
-  <div class="max-w-6xl mx-auto px-4 py-8">
-    <header class="mb-8 border-b pb-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight text-slate-900">PluriENS</h1>
-        <p class="text-sm text-slate-500">Catalogue des cours de l'ENS PSL accessibles à tous ses étudiants.</p>
+<body class="bg-paper text-ink min-h-screen font-sans selection:bg-bordeaux selection:text-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <header class="mb-10 border-b-[3px] border-transparent pb-6 flex flex-col md:flex-row md:items-end justify-between gap-6" style="border-image: linear-gradient(to right, #8A1538, #1e3a8a, #065f46, #b45309) 1;">
+      <div class="max-w-2xl flex items-center gap-4">
+        <img src={{ url_for('static', filename='ens-ulm-logo.png') }} alt="Logo ENS Ulm" class="h-12 w-auto object-contain shrink-0">
+        <div>
+          <h1 class="text-4xl md:text-5xl font-bold font-serif text-ink tracking-tight mb-2">PluriENS</h1>
+          <p class="text-lg text-stone-600 font-serif italic leading-snug">Catalogue des cours de l'ENS PSL accessibles à tous les étudiants.</p>
+        </div>
       </div>
-      <p class="text-xs text-slate-500 sm:text-right max-w-xs leading-relaxed">
-        Please reach me at
-        <a href="mailto:justin.monteilhet@ens.psl.eu"
-          class="text-blue-600 hover:underline font-medium">justin.monteilhet@ens.psl.eu</a>
-        if you have questions or want to contribute !
-      </p>
+      <div class="text-xs text-stone-500 md:text-right font-sans max-w-xs uppercase tracking-widest leading-relaxed">
+        <span class="block text-ink font-semibold mb-1">2026/2027</span>
+        Contact : <a href="mailto:justin.monteilhet@ens.psl.eu" class="text-bordeaux hover:underline">justin.monteilhet@ens.psl.eu</a>
+      </div>
     </header>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <!-- Colonne principale (3/4) -->
-      <main class="lg:col-span-3">
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-          <input type="text" id="search" placeholder="Rechercher cours, prof..."
-            class="p-2.5 text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 col-span-1 sm:col-span-2 md:col-span-1">
-          <select id="dept"
-            class="p-2.5 text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-400">
-            <option value="">Tous les départements</option>
-          </select>
-          <select id="type"
-            class="p-2.5 text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-400">
-            <option value="">Tous les types</option>
-            <option value="cours">Cours</option>
-            <option value="seminaire">Séminaire</option>
-            <option value="atelier">Atelier</option>
-          </select>
-          <select id="periode"
-            class="p-2.5 text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-400">
-            <option value="">Toutes les périodes</option>
-            <option value="Semestre 1">Semestre 1</option>
-            <option value="Semestre 2">Semestre 2</option>
-            <option value="Année">Annuel / Année</option>
-          </select>
-          <select id="jour"
-            class="p-2.5 text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-400">
-            <option value="">Tous les jours</option>
-            <option value="Lundi">Lundi</option>
-            <option value="Mardi">Mardi</option>
-            <option value="Mercredi">Mercredi</option>
-            <option value="Jeudi">Jeudi</option>
-            <option value="Vendredi">Vendredi</option>
-          </select>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      <main class="lg:col-span-9">
+        <div class="flex flex-col sm:flex-row flex-wrap gap-4 mb-8 pb-6 border-b border-bord text-sm">
+          <input type="text" id="search" placeholder="Recherche par mot-clé..." class="flex-1 min-w-[200px] pb-1 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux placeholder:text-stone-400 font-serif text-lg italic transition-colors">
+          <div class="flex gap-3 flex-wrap">
+            <select id="dept" class="pb-1 pr-6 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux text-stone-700 cursor-pointer font-medium uppercase tracking-wider text-[10px]"><option value="">Départements (Tous)</option></select>
+            <select id="type" class="pb-1 pr-6 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux text-stone-700 cursor-pointer font-medium uppercase tracking-wider text-[10px]">
+              <option value="">Type (Tous)</option><option value="cours">Cours</option><option value="seminaire">Séminaire</option><option value="atelier">Atelier</option>
+            </select>
+            <select id="periode" class="pb-1 pr-6 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux text-stone-700 cursor-pointer font-medium uppercase tracking-wider text-[10px]">
+              <option value="">Période (Toutes)</option><option value="Semestre 1">Semestre 1</option><option value="Semestre 2">Semestre 2</option><option value="Année">Annuel</option>
+            </select>
+            <select id="jour" class="pb-1 pr-6 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux text-stone-700 cursor-pointer font-medium uppercase tracking-wider text-[10px]">
+              <option value="">Jour (Tous)</option><option value="Lundi">Lundi</option><option value="Mardi">Mardi</option><option value="Mercredi">Mercredi</option><option value="Jeudi">Jeudi</option><option value="Vendredi">Vendredi</option>
+            </select>
+          </div>
         </div>
 
-        <div id="count" class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4"></div>
-        <div id="grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity duration-150"></div>
+        <div class="flex justify-between items-baseline mb-6">
+          <div id="count" class="text-xs font-bold text-stone-900 uppercase tracking-widest font-sans"></div>
+          <button onclick="openForm('Ajout', null)" class="text-[11px] uppercase tracking-widest font-bold px-4 py-2 bg-bordeaux text-white hover:bg-stone-900 transition-colors flex items-center gap-2">
+            <span>+</span> Soumettre une entrée
+          </button>
+        </div>
+        
+        <div id="grid" class="grid grid-cols-1 md:grid-cols-2 gap-0 border-t-2 border-ink transition-opacity duration-200 relative"></div>
       </main>
 
-      <!-- Panneau latéral (1/4) -->
-      <div class="lg:col-span-1">
-        <aside class="bg-white border border-slate-200 rounded-lg p-4 text-xs shadow-sm">
-          <h3 class="font-semibold text-slate-900 mb-3 uppercase tracking-wider text-[11px] text-slate-500">État de la
-            base par département</h3>
-
-          <!-- Départements OK -->
-          <div class="mb-3">
-            <div class="flex items-center gap-1.5 font-medium text-emerald-700 mb-2">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>À jour</span>
+      <aside class="lg:col-span-3">
+        <div class="sticky top-8">
+          <h3 class="font-bold text-ink mb-4 uppercase tracking-widest text-[11px] font-sans border-b border-bord pb-2">Etat du catalogue</h3>
+          <div class="mb-6">
+            <div class="flex items-center gap-2 font-semibold text-[10px] uppercase tracking-widest text-emerald-800 mb-3">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-700"></span>Catalogues complets
             </div>
-            <div class="flex flex-wrap gap-1 text-slate-600">
-              <span class="px-2 py-0.5 bg-slate-100 rounded text-[11px]">Arts</span>
-              <span class="px-2 py-0.5 bg-slate-100 rounded text-[11px]">Bio</span>
-              <span class="px-2 py-0.5 bg-slate-100 rounded text-[11px]">CERES</span>
-              <span class="px-2 py-0.5 bg-slate-100 rounded text-[11px]">CIENS</span>
-              <span class="px-2 py-0.5 bg-slate-100 rounded text-[11px]">DEC</span>
-              <span class="px-2 py-0.5 bg-slate-100 rounded text-[11px]">DSA</span>
-              <span class="px-2 py-0.5 bg-slate-100 rounded text-[11px]">ECLA</span>
-              <span class="px-2 py-0.5 bg-slate-100 rounded text-[11px]">Histoire</span>
-              <span class="px-2 py-0.5 bg-slate-100 rounded text-[11px]">Informatique</span>
-              <span class="px-2 py-0.5 bg-slate-100 rounded text-[11px]">LILA</span>
-              <span class="px-2 py-0.5 bg-slate-100 rounded text-[11px]">Maths</span>
-              <span class="px-2 py-0.5 bg-slate-100 rounded text-[11px]">Philosophie</span>
-              <span class="px-2 py-0.5 bg-slate-100 rounded text-[11px]">Physique</span>
+            <div class="flex flex-wrap gap-2 text-[10px] font-medium tracking-wider text-stone-600 uppercase">
+              <span>Arts</span>·<span>Bio</span>·<span>CERES</span>·<span>CIENS</span>·<span>DEC</span>·<span>DSA</span>·<span>ECLA</span>·<span>Histoire</span>·<span>Info</span>·<span>LILA</span>·<span>Maths</span>·<span>Philo</span>·<span>Physique</span>
             </div>
           </div>
-
-          <!-- Départements avec limitations -->
-          <div class="space-y-1.5 border-t border-slate-100 pt-3">
-            <div class="flex items-center justify-between text-slate-700">
-              <span>Chimie</span>
-              <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">EDT pas à
-                jour</span>
+          <div class="space-y-3 border-t border-bord pt-4 text-xs font-sans">
+            <div class="flex items-center gap-2 font-semibold text-[10px] uppercase tracking-widest text-red-800 mb-3">
+              <span class="w-1.5 h-1.5 rounded-full bg-red-700"></span>Catalogues absents
             </div>
-            <div class="flex items-center justify-between text-slate-700">
-              <span>Économie</span>
-              <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">Site pas à
-                jour</span>
-            </div>
-            <div class="flex items-center justify-between text-slate-700">
-              <span>Géosciences</span>
-              <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">Site pas à
-                jour</span>
-            </div>
-            <div class="flex items-center justify-between text-slate-700">
-              <span>Sciences sociales</span>
-              <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">Site pas à
-                jour</span>
-            </div>
-            <div class="flex items-center justify-between text-slate-700">
-              <span>Géographie</span>
-              <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 font-medium">Indisponible</span>
-            </div>
+            <div class="flex justify-between items-center group"><span class="font-medium text-stone-700">Chimie</span><span class="text-[9px] uppercase tracking-widest text-amber-700">EDT pas à jour</span></div>
+            <div class="flex justify-between items-center group"><span class="font-medium text-stone-700">Économie</span><span class="text-[9px] uppercase tracking-widest text-amber-700">Site pas à jour</span></div>
+            <div class="flex justify-between items-center group"><span class="font-medium text-stone-700">Géosciences</span><span class="text-[9px] uppercase tracking-widest text-amber-700">Site pas à jour</span></div>
+            <div class="flex justify-between items-center group"><span class="font-medium text-stone-700">Sc. sociales</span><span class="text-[9px] uppercase tracking-widest text-amber-700">Site pas à jour</span></div>
+            <div class="flex justify-between items-center group"><span class="font-medium text-stone-700">Géographie</span><span class="text-[9px] uppercase tracking-widest text-red-700 font-bold">Indisponible</span></div>
           </div>
-        </aside>
-      </div>
+        </div>
+      </aside>
     </div>
   </div>
 
   <script>
     let deptsLoaded = false;
+    let currentCourses = [];
 
-    function cleanVal(v) {
-      if (!v || v.trim() === '' || v.trim() === '-') return null;
-      return v.trim();
-    }
+    const DEPT_COLORS = {
+      'ARTS': { text: 'text-rose-900', bg: 'bg-rose-50/60 hover:bg-rose-100/60' },
+      'DMA': { text: 'text-blue-900', bg: 'bg-blue-50/60 hover:bg-blue-100/60' },
+      'PHYSIQUE': { text: 'text-emerald-900', bg: 'bg-emerald-50/60 hover:bg-emerald-100/60' },
+      'HISTOIRE': { text: 'text-amber-900', bg: 'bg-amber-50/60 hover:bg-amber-100/60' },
+      'PHILOSOPHIE': { text: 'text-orange-900', bg: 'bg-orange-50/60 hover:bg-orange-100/60' },
+      'INFORMATIQUE': { text: 'text-slate-700', bg: 'bg-slate-100/60 hover:bg-slate-200/60' },
+      'Biologie': { text: 'text-lime-800', bg: 'bg-lime-50/60 hover:bg-lime-100/60' },
+      'CERES': { text: 'text-teal-800', bg: 'bg-teal-50/60 hover:bg-teal-100/60' },
+      'DEC': { text: 'text-purple-900', bg: 'bg-purple-50/60 hover:bg-purple-100/60' },
+      'LILA': { text: 'text-fuchsia-900', bg: 'bg-fuchsia-50/60 hover:bg-fuchsia-100/60' },
+      'ECLA': { text: 'text-pink-900', bg: 'bg-pink-50/60 hover:bg-pink-100/60' },
+      'DSA': { text: 'text-yellow-900', bg: 'bg-yellow-50/60 hover:bg-yellow-100/60' },
+      'CIENS': { text: 'text-red-900', bg: 'bg-red-50/60 hover:bg-red-100/60' }
+    };
+    const getDeptTheme = (dept) => DEPT_COLORS[dept] || { text: 'text-stone-600', bg: 'bg-[#F9F8F6] hover:bg-[#F2EFE9]' };
 
-    function formatEcts(ects) {
+    const esc = (str) => String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+    const cleanVal = (v) => (!v || v.trim() === '' || v.trim() === '-') ? null : v.trim();
+    const formatEcts = (ects) => {
       const v = cleanVal(ects);
       if (!v) return null;
       if (v === '0' || v.toLowerCase() === 'non validable') return 'Non validable';
-      if (v.toLowerCase().includes('ects')) return v;
-      return `${v} ECTS`;
+      return v.toLowerCase().includes('ects') ? v : `${v} ECTS`;
+    };
+
+    function setFilter(id, value) {
+      const select = document.getElementById(id);
+      if (!select || !value) return;
+      const target = value.trim().toLowerCase();
+      for (let option of select.options) {
+        if (option.value.trim().toLowerCase() === target) { select.value = option.value; break; }
+      }
+      loadCourses();
     }
 
-    function formatHoraire(c) {
-      const j = cleanVal(c.jour);
-      if (j) {
-        const h = (cleanVal(c.heure_debut) && cleanVal(c.heure_fin)) ? ` (${c.heure_debut}-${c.heure_fin})` : '';
-        return `${j}${h}`;
+    function openForm(actionCode, id) {
+      let c = {}, msg = "Soumettre une nouvelle entrée au catalogue ?";
+      if (actionCode !== 'Ajout') {
+        c = currentCourses.find(course => String(course.id) === String(id));
+        if (!c) return;
+        msg = `Gérer l'entrée "${c.titre}" (${actionCode === 'Modif' ? 'révision' : 'suppression'}) ?`;
       }
-      return cleanVal(c.horaire_brut) || 'Horaire indisponible';
+      if (!confirm(msg)) return;
+      const typeFmt = c.type ? c.type.charAt(0).toUpperCase() + c.type.slice(1).toLowerCase() : '';
+      const params = new URLSearchParams({
+        action: {'Ajout': 'Ajouter un cours', 'Modif': 'Modifier un cours', 'Suppr': 'Supprimer un cours'}[actionCode] || '',
+        id: c.id || '', titre: c.titre || '', departement: c.departement || '', type: typeFmt, periode: c.periode || '',
+        jour: c.jour || '', lieu: c.lieu || '', ects: c.ects || '', volume_horaire: c.volume_horaire || '', professeur: c.professeurs || '',
+        horaire: c.horaire_brut || c.horaire_affichage || ''
+      });
+      window.open(`https://tally.so/r/RGqgYd?${params.toString()}`, '_blank');
     }
 
     async function loadCourses() {
       const grid = document.getElementById('grid');
-      grid.classList.add('opacity-40'); // Floute légèrement pendant le fetch
-
-      const q = document.getElementById('search').value;
-      const dept = document.getElementById('dept').value;
-      const type = document.getElementById('type').value;
-      const periode = document.getElementById('periode').value;
-      const jour = document.getElementById('jour').value;
-
-      const params = new URLSearchParams({ q, dept, type, periode, jour });
+      grid.classList.add('opacity-40');
+      const params = new URLSearchParams({
+        q: document.getElementById('search').value, dept: document.getElementById('dept').value,
+        type: document.getElementById('type').value, periode: document.getElementById('periode').value,
+        jour: document.getElementById('jour').value
+      });
+      
       const res = await fetch(`/api/courses?${params}`);
       const data = await res.json();
+      currentCourses = data.courses;
 
       if (!deptsLoaded && data.departments) {
         const select = document.getElementById('dept');
         data.departments.forEach(d => select.add(new Option(d, d)));
         deptsLoaded = true;
       }
-
-      document.getElementById('count').textContent = `${data.courses.length} cours trouvé(s)`;
-      grid.innerHTML = data.courses.map(c => {
-        const ectsTxt = formatEcts(c.ects);
-        const profsTxt = cleanVal(c.professeurs) ? c.professeurs.replace(/,/g, ', ') : 'Enseignant non renseigné';
-        const lieuTxt = cleanVal(c.lieu) || 'Lieu indisponible';
-        const periodeTxt = cleanVal(c.periode) || 'Période non précisée';
+      document.getElementById('count').textContent = `${data.courses.length} ENTRÉES RÉPERTORIÉES`;
+      
+      grid.innerHTML = data.courses.map((c, index) => {
+        const num = String(index + 1).padStart(3, '0');
+        const titre = esc(c.titre);
+        const profsTxt = esc(cleanVal(c.professeurs) ? c.professeurs.replace(/,/g, ', ') : 'Non renseigné');
+        const lieuTxt = esc(cleanVal(c.lieu) || '—');
+        const deptTxt = esc(cleanVal(c.departement) || 'ENS');
+        const typeTxt = esc(cleanVal(c.type));
+        const periodeTxt = esc(cleanVal(c.periode) || '—');
+        const ectsTxt = esc(formatEcts(c.ects));
+        const horaireTxt = esc(cleanVal(c.horaire_affichage) || '—');
+        const theme = getDeptTheme(c.departement);
 
         return `
-          <div class="bg-white p-5 rounded-lg border border-slate-200 hover:border-slate-300 transition-all flex flex-col justify-between card-spawn">
-            <div>
-              <div class="flex items-center justify-between gap-2 mb-2 flex-wrap">
-                <div class="flex items-center gap-1.5 flex-wrap">
-                  <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">${cleanVal(c.departement) || 'ENS'}</span>
-                  ${cleanVal(c.type) ? `<span class="text-xs font-medium px-2 py-0.5 rounded bg-blue-50 text-blue-700">${c.type}</span>` : ''}
-                  <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-50 text-emerald-800">${periodeTxt}</span>
-                </div>
-                ${ectsTxt ? `<span class="text-xs font-semibold text-slate-600">${ectsTxt}</span>` : ''}
-              </div>
-              <h2 class="font-semibold text-slate-900 mb-1 leading-snug">${c.titre}</h2>
-              <p class="text-xs text-slate-600 mb-3">${profsTxt}</p>
+        <article class="py-6 border-b border-bord flex flex-col group relative entry-spawn ${theme.bg} transition-colors p-4 rounded-sm border-l border-transparent hover:border-bord">
+          <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 shadow-sm px-2 py-1 border border-bord rounded z-10">
+            <button onclick="openForm('Modif', '${c.id}')" class="text-[9px] uppercase font-bold text-stone-500 hover:text-ink tracking-widest">Éditer</button>
+            <span class="text-stone-300">|</span>
+            <button onclick="openForm('Suppr', '${c.id}')" class="text-[9px] uppercase font-bold text-stone-500 hover:text-red-700 tracking-widest">Retirer</button>
+          </div>
+          <div class="flex items-center gap-2 mb-3 text-[9px] font-sans tracking-widest uppercase font-bold text-stone-400 flex-wrap">
+            <span class="text-stone-400 font-serif text-xs italic mr-1">N°${num}</span>
+            <button type="button" onclick="setFilter('dept', '${esc(c.departement)}')" class="${theme.text} hover:underline cursor-pointer">${deptTxt}</button>
+            ${typeTxt ? `<span class="text-stone-300">/</span><button type="button" onclick="setFilter('type', '${esc(c.type)}')" class="hover:underline cursor-pointer">${typeTxt}</button>` : ''}
+            <span class="text-stone-300">/</span><button type="button" onclick="setFilter('periode', '${esc(c.periode)}')" class="hover:underline cursor-pointer">${periodeTxt}</button>
+          </div>
+          <h2 class="text-2xl font-serif font-bold text-ink leading-tight mb-2 pr-12 group-hover:${theme.text} transition-colors">${titre}</h2>
+          <p class="text-sm font-serif italic text-stone-600 mb-6">${profsTxt}</p>
+          <div class="mt-auto flex justify-between gap-4 text-[11px] font-sans pt-3 border-t border-dashed border-stone-300">
+            <div class="flex-1 pr-4">
+              <span class="block text-stone-500 uppercase text-[8px] tracking-widest mb-0.5 font-bold">Horaire & Lieu</span>
+              <span class="text-stone-700 font-medium">${horaireTxt} <br> <span class="text-stone-500">${lieuTxt}</span></span>
             </div>
-            <div class="border-t pt-3 mt-2 flex items-center justify-between text-xs text-slate-500 gap-2">
-              <div>
-                <span class="font-medium text-slate-700">${formatHoraire(c)}</span>
-                <span class="ml-2 text-slate-400">• ${lieuTxt}</span>
-              </div>
-              ${cleanVal(c.lien) ? `<a href="${c.lien}" target="_blank" class="text-blue-600 font-medium hover:underline shrink-0">Fiche &rarr;</a>` : ''}
+            <div class="flex-none flex flex-col justify-between items-end text-right whitespace-nowrap">
+              <span class="font-sans text-[10px] tracking-widest font-bold ${ectsTxt === 'Non validable' ? 'text-red-700' : 'text-stone-700'}">${ectsTxt || '—'}</span>
+              ${c.lien ? `<a href="${esc(c.lien)}" target="_blank" class="${theme.text} font-bold hover:underline mt-2 text-[9px] uppercase tracking-widest">Consulter →</a>` : ''}
             </div>
           </div>
-        `;
+        </article>`;
       }).join('');
-
       grid.classList.remove('opacity-40');
     }
 
-    ['search', 'dept', 'type', 'periode', 'jour'].forEach(id => {
-      document.getElementById(id).addEventListener('input', loadCourses);
-    });
+    ['search', 'dept', 'type', 'periode', 'jour'].forEach(id => document.getElementById(id).addEventListener('input', loadCourses));
     loadCourses();
   </script>
 </body>
-
 </html>
