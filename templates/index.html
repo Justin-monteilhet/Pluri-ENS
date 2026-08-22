@@ -141,7 +141,7 @@
       const params = new URLSearchParams({
         action: {'Ajout': 'Ajouter un cours', 'Modif': 'Modifier un cours', 'Suppr': 'Supprimer un cours'}[actionCode] || '',
         id: c.id || '', titre: c.titre || '', departement: c.departement || '', type: typeFmt, periode: c.periode || '',
-        jour: c.jour || '', lieu: c.lieu || '', ects: c.ects || '', volume_horaire: c.volume_horaire || '', professeur: c.professeurs || '',
+        jour: c.jour || '', lieu: c.lieu || '', lien: c.lien || '', ects: c.ects || '', volume_horaire: c.volume_horaire || '', professeur: c.professeurs || '',
         horaire: c.horaire_brut || c.horaire_affichage || ''
       });
       window.open(`https://tally.so/r/RGqgYd?${params.toString()}`, '_blank');
