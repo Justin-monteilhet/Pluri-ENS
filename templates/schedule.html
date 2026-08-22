@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PluriENS — Emploi du temps</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='ens-ulm-logo.png') }}">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { serif: ['"Cormorant Garamond"', 'serif'], sans: ['Inter', 'sans-serif'] },
+                    colors: { paper: '#FDFBF7', ink: '#1C1917', bordeaux: '#8A1538', bord: '#E7E5E4' }
+                }
+            }
+        }
+    </script>
+    <style>
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.25rem center;
+            background-size: 1em;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #FDFBF7;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #D6D3D1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #A8A29E;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-paper text-ink min-h-screen font-sans selection:bg-bordeaux selection:text-white flex flex-col [scrollbar-gutter:stable]">
+    <!-- Remplacer max-w-[1600px] par max-w-[1920px] ou max-w-none -->
+    <div class="w-full max-w-[1920px] mx-auto px-4 py-6 flex-1 flex flex-col">
+
+        <header
+            class="mb-10 border-b-[3px] border-transparent pb-6 flex flex-col md:flex-row md:items-end justify-between gap-6"
+            style="border-image: linear-gradient(to right, #8A1538, #1e3a8a, #065f46, #b45309) 1;">
+            <div class="max-w-2xl flex items-center gap-4">
+                <img src="{{ url_for('static', filename='ens-ulm-logo.png' ) }}" alt="Logo ENS Ulm"
+                    class="h-12 w-auto object-contain shrink-0">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-bold font-serif text-ink tracking-tight mb-2">PluriENS</h1>
+                    <p class="text-lg text-stone-600 font-serif italic leading-snug">Catalogue des cours de l'ENS PSL
+                        accessibles
+                        à tous les étudiants.</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:items-end gap-3">
+                <nav class="flex bg-stone-200/80 p-1 rounded-lg border border-stone-300 font-sans">
+                    <a href="/"
+                        class="px-5 py-2 rounded-md font-medium text-xs uppercase tracking-wider text-stone-600 hover:text-ink transition-colors">
+                        Catalogue
+                    </a>
+                    <a href="/schedule"
+                        class="px-5 py-2 rounded-md font-bold text-xs uppercase tracking-wider bg-white text-bordeaux shadow-sm">
+                        Planning
+                    </a>
+                </nav>
+                <div class="text-xs text-stone-500 md:text-right font-sans uppercase tracking-widest leading-relaxed">
+                    <span class="block text-ink font-semibold">2026/2027</span>
+                    Contact : <a href="mailto:justin.monteilhet@ens.psl.eu"
+                        class="text-bordeaux hover:underline">justin.monteilhet@ens.psl.eu</a>
+                </div>
+            </div>
+        </header>
+
+        <div class="w-full mx-auto px-4 md:px-6 py-4 flex flex-col xl:flex-row gap-6 items-start">
+
+            <!-- Panneau latéral -->
+            <aside class="w-full xl:w-80 shrink-0 bg-white border border-bord rounded-md flex flex-col">
+                <div class="p-4 border-b border-bord bg-[#F9F8F6] space-y-3 shrink-0">
+                    <div class="flex justify-between items-baseline">
+                        <h2 class="font-bold text-ink uppercase tracking-widest text-[11px]">Recherche & Sélection</h2>
+                        <span id="sch-count"
+                            class="text-[9px] font-bold text-stone-500 uppercase tracking-widest"></span>
+                    </div>
+                    <input type="text" id="sch-search" placeholder="Rechercher un cours..."
+                        class="w-full pb-1 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux font-serif italic text-base">
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <select id="sch-jour"
+                                class="pb-1 pr-6 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux text-stone-700 cursor-pointer font-medium uppercase tracking-wider text-[10px]">
+                                <option value="">Jour (Tous)</option>
+                                <option value="Lundi">Lundi</option>
+                                <option value="Mardi">Mardi</option>
+                                <option value="Mercredi">Mercredi</option>
+                                <option value="Jeudi">Jeudi</option>
+                                <option value="Vendredi">Vendredi</option>
+                            </select>
+                            <select id="sch-periode"
+                                class="pb-1 pr-6 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux text-stone-700 cursor-pointer font-medium uppercase tracking-wider text-[10px]">
+                                <option value="">Période (Toutes)</option>
+                            </select>
+                        </div>
+                        <select id="sch-dept"
+                            class="w-full pb-1 pr-6 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux text-stone-700 cursor-pointer font-medium uppercase tracking-wider text-[10px]">
+                            <option value="">Départements (Tous)</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Ajout d'une limite de hauteur sur mobile (max-h-[40vh]) pour pouvoir scroller vers la grille -->
+                <div id="course-list" class="flex-1 max-h-[40vh] xl:max-h-none overflow-y-auto p-4 space-y-3"></div>
+            </aside>
+
+            <!-- Zone du Planning -->
+            <main class="flex-1 w-full min-w-0 bg-white border border-bord rounded-md overflow-hidden">
+                <div
+                    class="p-4 border-b border-bord bg-[#F9F8F6] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
+                    <h2 class="font-bold text-ink uppercase tracking-widest text-[11px] pt-1">Grille Hebdomadaire</h2>
+                    <div class="flex flex-col items-end gap-1.5 w-full sm:w-auto">
+                        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                            <button onclick="clearSchedule()"
+                                class="h-9 px-3.5 text-xs font-medium text-[#800020] bg-stone-200 hover:bg-stone-300 rounded-md transition-colors flex items-center justify-center">Vider</button>
+                            <div class="h-9 flex items-stretch bg-stone-200 rounded-md overflow-hidden">
+                                <span
+                                    class="px-3 text-xs font-semibold uppercase tracking-wider text-stone-100 bg-[#800020] flex items-center select-none">Exporter</span>
+                                <button onclick="exportPDF()"
+                                    class="px-2.5 text-xs font-medium text-[#800020] hover:bg-stone-300 transition-colors flex items-center">PDF</button>
+                                <button onclick="exportICS()"
+                                    class="px-2.5 text-xs font-medium text-[#800020] hover:bg-stone-300 transition-colors flex items-center">.ICS</button>
+                            </div>
+                        </div>
+                        <div class="relative group self-end">
+                            <button
+                                class="text-[10px] font-medium text-[#800020]/80 hover:text-[#800020] underline decoration-dotted underline-offset-2 transition-colors cursor-help">Comment
+                                exporter vers mon calendrier ?</button>
+                            <div
+                                class="absolute right-0 top-full mt-1.5 w-[calc(100vw-32px)] max-w-80 sm:w-80 p-3 bg-white border border-stone-200 shadow-xl rounded-lg text-stone-700 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150 z-50">
+                                <p class="font-semibold text-[#800020] text-[11px] mb-2 pb-1 border-b border-stone-100">
+                                    Importation du fichier .ICS</p>
+                                <div class="space-y-2.5 text-[10px] leading-snug text-stone-600">
+                                    <div><strong class="text-stone-800">Google Calendar :</strong>
+                                        <ol class="mt-1 space-y-1 pl-1 list-decimal list-inside opacity-90">
+                                            <li>Dans la barre gauche, cliquez sur le <strong>+</strong> à côté de
+                                                <em>"Autres agendas"</em> &gt; <em>"Créer un agenda"</em>.</li>
+                                            <li>Allez dans Paramètres ⚙️ &gt; <em>Importer et exporter</em>.</li>
+                                        </ol>
+                                    </div>
+                                    <div><strong class="text-stone-800">Apple Calendar (Mac / iOS) :</strong>
+                                        <p class="mt-0.5 opacity-90">Double-cliquez sur le fichier téléchargé.</p>
+                                    </div>
+                                    <div><strong class="text-stone-800">Outlook :</strong>
+                                        <p class="mt-0.5 opacity-90">Fichier &gt; Ouvrir et exporter &gt;
+                                            Importer/Exporter.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto touch-pan-x" id="planning-grid">
+                    <div class="min-w-[650px]">
+                        <!-- Le reste du code de la grille (jours et heures) reste strictement identique ici -->
+                        <!-- En-tête des jours -->
+                        <div
+                            class="grid grid-cols-11 border-b border-stone-300 bg-[#F2EFE9] text-[11px] font-bold uppercase tracking-wider text-stone-700 text-center py-2.5">
+                            <div class="col-span-1 border-r border-stone-300">Heure</div>
+                            <div class="col-span-2 border-r border-stone-300">Lundi</div>
+                            <div class="col-span-2 border-r border-stone-300">Mardi</div>
+                            <div class="col-span-2 border-r border-stone-300">Mercredi</div>
+                            <div class="col-span-2 border-r border-stone-300">Jeudi</div>
+                            <div class="col-span-2">Vendredi</div>
+                        </div>
+
+                        <div class="relative bg-paper pt-3 pb-4">
+                            <!-- Grille d'arrière-plan -->
+                            <div class="divide-y divide-stone-300 border-b border-stone-300">
+                                <div class="grid grid-cols-11 h-16">
+                                    <div class="col-span-1 border-r border-stone-300 relative"><span
+                                            class="absolute -top-2.5 left-0 w-full text-center bg-paper font-mono text-[11px] font-bold text-stone-600">08:00</span>
+                                    </div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2"></div>
+                                </div>
+                                <div class="grid grid-cols-11 h-16">
+                                    <div class="col-span-1 border-r border-stone-300 relative"><span
+                                            class="absolute -top-2.5 left-0 w-full text-center bg-paper font-mono text-[11px] font-bold text-stone-600">09:00</span>
+                                    </div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2"></div>
+                                </div>
+                                <div class="grid grid-cols-11 h-16">
+                                    <div class="col-span-1 border-r border-stone-300 relative"><span
+                                            class="absolute -top-2.5 left-0 w-full text-center bg-paper font-mono text-[11px] font-bold text-stone-600">10:00</span>
+                                    </div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2"></div>
+                                </div>
+                                <div class="grid grid-cols-11 h-16">
+                                    <div class="col-span-1 border-r border-stone-300 relative"><span
+                                            class="absolute -top-2.5 left-0 w-full text-center bg-paper font-mono text-[11px] font-bold text-stone-600">11:00</span>
+                                    </div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2"></div>
+                                </div>
+                                <div class="grid grid-cols-11 h-16">
+                                    <div class="col-span-1 border-r border-stone-300 relative"><span
+                                            class="absolute -top-2.5 left-0 w-full text-center bg-paper font-mono text-[11px] font-bold text-stone-600">12:00</span>
+                                    </div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2"></div>
+                                </div>
+                                <div class="grid grid-cols-11 h-16">
+                                    <div class="col-span-1 border-r border-stone-300 relative"><span
+                                            class="absolute -top-2.5 left-0 w-full text-center bg-paper font-mono text-[11px] font-bold text-stone-600">13:00</span>
+                                    </div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2"></div>
+                                </div>
+                                <div class="grid grid-cols-11 h-16">
+                                    <div class="col-span-1 border-r border-stone-300 relative"><span
+                                            class="absolute -top-2.5 left-0 w-full text-center bg-paper font-mono text-[11px] font-bold text-stone-600">14:00</span>
+                                    </div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2"></div>
+                                </div>
+                                <div class="grid grid-cols-11 h-16">
+                                    <div class="col-span-1 border-r border-stone-300 relative"><span
+                                            class="absolute -top-2.5 left-0 w-full text-center bg-paper font-mono text-[11px] font-bold text-stone-600">15:00</span>
+                                    </div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2"></div>
+                                </div>
+                                <div class="grid grid-cols-11 h-16">
+                                    <div class="col-span-1 border-r border-stone-300 relative"><span
+                                            class="absolute -top-2.5 left-0 w-full text-center bg-paper font-mono text-[11px] font-bold text-stone-600">16:00</span>
+                                    </div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2"></div>
+                                </div>
+                                <div class="grid grid-cols-11 h-16">
+                                    <div class="col-span-1 border-r border-stone-300 relative"><span
+                                            class="absolute -top-2.5 left-0 w-full text-center bg-paper font-mono text-[11px] font-bold text-stone-600">17:00</span>
+                                    </div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2"></div>
+                                </div>
+                                <div class="grid grid-cols-11 h-16">
+                                    <div class="col-span-1 border-r border-stone-300 relative"><span
+                                            class="absolute -top-2.5 left-0 w-full text-center bg-paper font-mono text-[11px] font-bold text-stone-600">18:00</span>
+                                    </div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2"></div>
+                                </div>
+                                <div class="grid grid-cols-11 h-16">
+                                    <div class="col-span-1 border-r border-stone-300 relative"><span
+                                            class="absolute -top-2.5 left-0 w-full text-center bg-paper font-mono text-[11px] font-bold text-stone-600">19:00</span>
+                                    </div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2 border-r border-stone-200"></div>
+                                    <div class="col-span-2"></div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-11 border-t border-stone-300 h-0 relative">
+                                <div class="col-span-1 relative"><span
+                                        class="absolute -top-2.5 left-0 w-full text-center bg-paper font-mono text-[11px] font-bold text-stone-600">20:00</span>
+                                </div>
+                            </div>
+
+                            <!-- Calque applicatif des cours -->
+                            <div class="absolute inset-0 pt-3 pb-4 grid grid-cols-11 pointer-events-none">
+                                <div class="col-span-1"></div>
+                                <div id="col-Lundi" class="col-span-2 relative pointer-events-auto"></div>
+                                <div id="col-Mardi" class="col-span-2 relative pointer-events-auto"></div>
+                                <div id="col-Mercredi" class="col-span-2 relative pointer-events-auto"></div>
+                                <div id="col-Jeudi" class="col-span-2 relative pointer-events-auto"></div>
+                                <div id="col-Vendredi" class="col-span-2 relative pointer-events-auto"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+    </div>
+
+    <script>
+        let selectedCourseIds = JSON.parse(localStorage.getItem('savedSchedule')) || [];
+        let allPlannableCourses = [];
+
+        const esc = (str) => String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+
+        function saveSchedule() {
+            localStorage.setItem('savedSchedule', JSON.stringify(selectedCourseIds));
+        }
+
+        function addCourseToSchedule(id) {
+            if (!selectedCourseIds.includes(id)) {
+                selectedCourseIds.push(id);
+                saveSchedule();
+                updateUI();
+            }
+        }
+
+        function clearSchedule() {
+            if (selectedCourseIds.length === 0) return;
+            if (!confirm("Voulez-vous vraiment vider tout l'emploi du temps ?")) return;
+
+            selectedCourseIds = [];
+
+            // Supprime la sauvegarde dans le stockage local
+            localStorage.removeItem('savedSchedule'); // Remplace par ta clé si différente
+
+            renderGrid();
+            if (typeof renderCourseList === 'function') renderCourseList();
+        }
+
+        function removeCourseFromSchedule(id) {
+            selectedCourseIds = selectedCourseIds.filter(cid => cid !== id);
+            saveSchedule();
+            updateUI();
+        }
+
+        function updateUI() {
+            renderCourseList();
+            if (typeof renderGrid === 'function') renderGrid();
+        }
+
+        function exportICS() {
+            const dayMap = {
+                'Lundi': ['02', 'MO'],
+                'Mardi': ['03', 'TU'],
+                'Mercredi': ['04', 'WE'],
+                'Jeudi': ['05', 'TH'],
+                'Vendredi': ['06', 'FR']
+            };
+
+            let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//EDT//FR\nCALSCALE:GREGORIAN\n";
+            const semesterEnd = "20270131T235959Z";
+
+            allPlannableCourses.filter(c => selectedCourseIds.includes(c.id)).forEach(c => {
+                c.schedules.forEach(s => {
+                    const [dNum, byDay] = dayMap[s.jour];
+                    const start = `202609${dNum}T${s.heure_debut.replace(':', '')}00`;
+                    const end = `202609${dNum}T${s.heure_fin.replace(':', '')}00`;
+
+                    // Fixed deterministic UID ensures re-imports overwrite rather than duplicate
+                    const uid = `edt-${c.id}-${s.jour}-${s.heure_debut.replace(':', '')}@planning.app`;
+
+                    ics += `BEGIN:VEVENT\n`;
+                    ics += `UID:${uid}\n`;
+                    ics += `DTSTART:${start}\n`;
+                    ics += `DTEND:${end}\n`;
+                    ics += `RRULE:FREQ=WEEKLY;BYDAY=${byDay};UNTIL=${semesterEnd}\n`;
+                    ics += `SUMMARY:[EDT] ${c.titre}\n`;
+                    ics += `CATEGORIES:Emploi du Temps\n`;
+                    ics += `LOCATION:${s.lieu || ''}\n`;
+                    ics += `END:VEVENT\n`;
+                });
+            });
+
+            ics += "END:VCALENDAR";
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
+            a.download = 'planning.ics';
+            a.click();
+        }
+
+        function exportPDF() {
+            const element = document.getElementById('planning-grid');
+            const bgColor = window.getComputedStyle(element).backgroundColor;
+
+            const fullWidth = element.scrollWidth;
+            const fullHeight = element.scrollHeight;
+
+            const opt = {
+                margin: 0,
+                filename: 'emploi_du_temps.pdf',
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: bgColor,
+                    scrollY: 0,
+                    scrollX: 0,
+                    windowWidth: document.documentElement.offsetWidth,
+                    windowHeight: fullHeight,
+                    onclone: (clonedDoc) => {
+                        const clonedElement = clonedDoc.getElementById('planning-grid');
+                        if (clonedElement) {
+                            clonedElement.style.height = 'auto';
+                            clonedElement.style.overflow = 'visible';
+                        }
+
+                        // Convertit le -webkit-line-clamp CSS en vrai texte tronqué avec '…' pour le rendu PDF
+                        const headers = clonedDoc.querySelectorAll('.group h4');
+                        headers.forEach(h => {
+                            const clamp = h.style.webkitLineClamp;
+                            if (clamp && clamp !== 'none') {
+                                if (h.scrollHeight > h.offsetHeight + 2) {
+                                    let text = h.textContent.trim();
+                                    while (text.length > 0 && h.scrollHeight > h.offsetHeight + 2) {
+                                        text = text.slice(0, -1);
+                                        h.textContent = text.trim() + '…';
+                                    }
+                                }
+                            }
+                            h.style.display = 'block';
+                            h.style.webkitLineClamp = 'none';
+                            h.style.overflow = 'hidden';
+                        });
+
+                        // Corrige le bug de superposition du texte
+                        const nodes = clonedDoc.querySelectorAll('.group h4, .group div');
+                        nodes.forEach(n => {
+                            n.style.overflowWrap = 'break-word';
+                            n.style.wordBreak = 'break-word';
+                        });
+                    }
+                },
+                jsPDF: {
+                    unit: 'px',
+                    format: [fullWidth, fullHeight],
+                    orientation: fullWidth > fullHeight ? 'landscape' : 'portrait'
+                }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+        async function loadPlannableCourses() {
+            const res = await fetch('/api/plannable_courses');
+            allPlannableCourses = await res.json();
+            populateDeptFilter();
+            renderCourseList();
+            renderGrid(); // Corrige le rafraîchissement de la grille au chargement
+        }
+
+        function populateDeptFilter() {
+            const select = document.getElementById('sch-dept');
+            const depts = [...new Set(allPlannableCourses.map(c => c.departement).filter(Boolean))].sort();
+            depts.forEach(d => select.add(new Option(d, d)));
+        }
+
+        // Remplit le selecteur de période dynamiquement
+        function populatePeriodeOptions() {
+            const select = document.getElementById('sch-periode');
+            if (!select) return;
+
+            const periodesSet = new Set();
+            allPlannableCourses.forEach(c => {
+                const p = c.periode || c.period || c.semestre;
+                if (p) periodesSet.add(String(p).trim());
+                if (Array.isArray(c.schedules)) {
+                    c.schedules.forEach(s => {
+                        if (s.periode) periodesSet.add(String(s.periode).trim());
+                    });
+                }
+            });
+
+            const periodes = Array.from(periodesSet).sort();
+            const currentVal = select.value;
+
+            select.innerHTML = '<option value="">Période (Toutes)</option>' +
+                periodes.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+
+            select.value = currentVal;
+        }
+
+        function renderCourseList() {
+            // Peuple le selecteur si pas encore fait
+            const selectPeriode = document.getElementById('sch-periode');
+            if (selectPeriode && selectPeriode.options.length <= 1 && allPlannableCourses.length > 0) {
+                populatePeriodeOptions();
+            }
+
+            const q = document.getElementById('sch-search').value.toLowerCase();
+            const dept = document.getElementById('sch-dept').value;
+            const jour = document.getElementById('sch-jour').value;
+            const periode = selectPeriode ? selectPeriode.value : '';
+
+            const filtered = allPlannableCourses.filter(c => {
+                const matchQ = !q || c.titre.toLowerCase().includes(q) || (c.notes && c.notes.toLowerCase().includes(q));
+                const matchDept = !dept || (c.departement || c.dept) === dept;
+                const matchJour = !jour || c.schedules.some(s => s.jour === jour);
+
+                const cPeriode = c.periode || c.period || c.semestre;
+                const matchPeriode = !periode ||
+                    cPeriode === periode ||
+                    (c.schedules && c.schedules.some(s => s.periode === periode));
+
+                return matchQ && matchDept && matchJour && matchPeriode;
+            });
+
+            const countEl = document.getElementById('sch-count');
+            if (countEl) countEl.textContent = `${filtered.length} / ${allPlannableCourses.length} COURS`;
+
+            const listEl = document.getElementById('course-list');
+            if (!filtered.length) {
+                listEl.innerHTML = `<p class="text-xs font-serif italic text-stone-500 text-center py-4">Aucun cours disponible.</p>`;
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(c => {
+                const isSelected = selectedCourseIds.includes(c.id);
+                const slotsTxt = c.schedules.map(s => `${s.jour || ''} ${s.heure_debut || ''}-${s.heure_fin || ''}`).join(' | ');
+                const displayPeriode = c.periode || c.period || c.semestre || '';
+
+                return `
+        <div class="p-3 border ${isSelected ? 'border-bordeaux bg-rose-50/40' : 'border-bord bg-paper'} rounded-sm text-xs flex flex-col justify-between transition-colors">
+          <div>
+            <div class="flex justify-between items-start gap-2 mb-1">
+              <span class="text-[9px] font-bold uppercase tracking-widest text-stone-500">
+                ${esc(c.departement || c.dept || 'ENS')}${displayPeriode ? ` · ${esc(displayPeriode)}` : ''}
+              </span>
+              <span class="text-[9px] font-bold uppercase text-bordeaux">${esc(c.ects || '')}</span>
+            </div>
+            <h3 class="font-serif font-bold text-sm text-ink leading-tight mb-1">${esc(c.titre)}</h3>
+            <p class="text-[10px] text-stone-600 font-medium mb-2">${esc(slotsTxt)}</p>
+          </div>
+          <div class="pt-2 border-t border-dashed border-stone-200 flex justify-end">
+            ${isSelected ? `
+              <button onclick="removeCourseFromSchedule(${c.id})" class="px-2 py-1 bg-stone-200 text-stone-800 hover:bg-stone-300 text-[10px] uppercase tracking-wider font-bold rounded-sm transition-colors">
+                - Retirer
+              </button>
+            ` : `
+              <button onclick="addCourseToSchedule(${c.id})" class="px-2 py-1 bg-bordeaux text-white hover:bg-stone-900 text-[10px] uppercase tracking-wider font-bold rounded-sm transition-colors">
+                + Ajouter
+              </button>
+            `}
+          </div>
+        </div>
+      `;
+            }).join('');
+        }
+        ['sch-search', 'sch-dept', 'sch-jour', 'sch-periode'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', renderCourseList);
+        });
+
+
+        loadPlannableCourses();
+    </script>
+
+    <script>
+        const START_HOUR = 8;
+        const END_HOUR = 20;
+        const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60;
+
+        function timeToPercentage(timeStr) {
+            if (!timeStr) return 0;
+            const parts = timeStr.split(':');
+            const h = parseInt(parts[0], 10);
+            const m = parseInt(parts[1] || '0', 10);
+            const currentMinutes = (h - START_HOUR) * 60 + m;
+            return Math.max(0, Math.min(100, (currentMinutes / TOTAL_MINUTES) * 100));
+        }
+
+        const DEPT_COLORS = {
+            'ARTS': { bg: 'bg-rose-100 hover:bg-rose-200', border: 'border-l-rose-700 border-stone-300', text: 'text-rose-950' },
+            'DMA': { bg: 'bg-sky-100 hover:bg-sky-200', border: 'border-l-sky-700 border-stone-300', text: 'text-sky-950' },
+            'PHYSIQUE': { bg: 'bg-emerald-100 hover:bg-emerald-200', border: 'border-l-emerald-700 border-stone-300', text: 'text-emerald-950' },
+            'HISTOIRE': { bg: 'bg-amber-100 hover:bg-amber-200', border: 'border-l-amber-700 border-stone-300', text: 'text-amber-950' },
+            'PHILOSOPHIE': { bg: 'bg-orange-100 hover:bg-orange-200', border: 'border-l-orange-700 border-stone-300', text: 'text-orange-950' },
+            'INFORMATIQUE': { bg: 'bg-slate-200 hover:bg-slate-300', border: 'border-l-slate-700 border-stone-300', text: 'text-slate-950' },
+            'Biologie': { bg: 'bg-lime-100 hover:bg-lime-200', border: 'border-l-lime-700 border-stone-300', text: 'text-lime-950' },
+            'CERES': { bg: 'bg-teal-100 hover:bg-teal-200', border: 'border-l-teal-700 border-stone-300', text: 'text-teal-950' },
+            'DEC': { bg: 'bg-purple-100 hover:bg-purple-200', border: 'border-l-purple-700 border-stone-300', text: 'text-purple-950' },
+            'LILA': { bg: 'bg-fuchsia-100 hover:bg-fuchsia-200', border: 'border-l-fuchsia-700 border-stone-300', text: 'text-fuchsia-950' },
+            'ECLA': { bg: 'bg-pink-100 hover:bg-pink-200', border: 'border-l-pink-700 border-stone-300', text: 'text-pink-950' },
+            'DSA': { bg: 'bg-yellow-100 hover:bg-yellow-200', border: 'border-l-yellow-700 border-stone-300', text: 'text-yellow-950' },
+            'CIENS': { bg: 'bg-indigo-100 hover:bg-indigo-200', border: 'border-l-indigo-700 border-stone-300', text: 'text-indigo-950' }
+        };
+
+        const getDeptTheme = (dept) => DEPT_COLORS[dept] || {
+            bg: 'bg-stone-200 hover:bg-stone-300',
+            border: 'border-l-stone-600 border-stone-300',
+            text: 'text-stone-900'
+        };
+
+        function timeToMins(t) {
+            const [h, m] = t.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        function renderGrid() {
+            const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
+            days.forEach(d => {
+                const col = document.getElementById(`col-${d}`);
+                if (col) col.innerHTML = '';
+            });
+
+            const selectedCourses = allPlannableCourses.filter(c => selectedCourseIds.includes(c.id));
+
+            days.forEach(day => {
+                let dailySlots = [];
+                selectedCourses.forEach(c => c.schedules.forEach(s => {
+                    if (s.jour === day) {
+                        dailySlots.push({
+                            course: c, slot: s,
+                            start: timeToMins(s.heure_debut), end: timeToMins(s.heure_fin),
+                            top: timeToPercentage(s.heure_debut),
+                            height: timeToPercentage(s.heure_fin) - timeToPercentage(s.heure_debut)
+                        });
+                    }
+                }));
+
+                if (!dailySlots.length) return;
+                dailySlots.sort((a, b) => a.start !== b.start ? a.start - b.start : b.end - a.end);
+
+                let clusters = [], cur = [], end = -1;
+                dailySlots.forEach(ev => {
+                    if (!cur.length || ev.start < end) {
+                        cur.push(ev); end = Math.max(end, ev.end);
+                    } else {
+                        clusters.push(cur); cur = [ev]; end = ev.end;
+                    }
+                });
+                if (cur.length) clusters.push(cur);
+
+                const colDOM = document.getElementById(`col-${day}`);
+                if (!colDOM) return;
+                const align = (day === 'Jeudi' || day === 'Vendredi') ? 'right-0' : 'left-0';
+
+                clusters.forEach(cluster => {
+                    let cols = [];
+                    cluster.forEach(ev => {
+                        let placed = false;
+                        for (let i = 0; i < cols.length; i++) {
+                            if (cols[i] <= ev.start) {
+                                ev.colIdx = i; cols[i] = ev.end; placed = true; break;
+                            }
+                        }
+                        if (!placed) { ev.colIdx = cols.length; cols.push(ev.end); }
+                    });
+
+                    const numCols = cols.length;
+                    cluster.forEach(ev => {
+                        ev.colSpan = 1;
+                        for (let i = ev.colIdx + 1; i < numCols; i++) {
+                            if (!cluster.some(other => other !== ev && other.colIdx === i && other.start < ev.end && other.end > ev.start)) ev.colSpan++;
+                            else break;
+                        }
+                    });
+
+                    cluster.forEach(ev => {
+                        if (ev.height <= 0) return;
+                        const theme = getDeptTheme(ev.course.departement || ev.course.dept);
+                        const colWidth = 100 / numCols;
+                        const w = colWidth * ev.colSpan, l = ev.colIdx * colWidth;
+
+                        // Nombre de lignes max selon la durée (ex: 1h=2L, 1h30=3L, 2h=5L, 3h=8L)
+                        const duration = ev.end - ev.start;
+                        const maxLines = Math.max(1, Math.floor((duration - 15) / 20));
+
+                        const card = document.createElement('div');
+                        card.className = "absolute z-10 hover:z-50 group";
+                        card.style.top = `${ev.top}%`; card.style.height = `${ev.height}%`;
+                        card.style.left = `calc(${l}% + 1px)`; card.style.width = `calc(${w}% - 2px)`;
+
+                        card.innerHTML = `
+                <div class="absolute top-0 ${align} w-max h-max min-w-full min-h-full max-w-full max-h-full group-hover:max-w-[250px] group-hover:max-h-[800px] overflow-hidden p-1.5 flex flex-col ${theme.bg} ${theme.text} ${theme.border} border-y border-r border-l-4 shadow-xs group-hover:shadow-xl cursor-pointer transition-[max-width,max-height,box-shadow] duration-0 delay-0 group-hover:delay-300">
+                    <button onclick="event.stopPropagation(); removeCourseFromSchedule(${ev.course.id})" class="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 z-20 shrink-0 text-[9px] font-bold bg-stone-200/90 hover:bg-stone-300 px-1 py-0.5 rounded transition-opacity duration-75">✕</button>
+                    <div class="flex-1 min-h-[14px] overflow-hidden pr-3.5 mb-1 group-hover:overflow-visible group-hover:flex-none">
+                        <h4 class="font-sans text-[11px] font-semibold leading-tight text-stone-800 [overflow-wrap:anywhere] group-hover:block group-hover:overflow-visible" style="display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: ${maxLines}; overflow: hidden;">${esc(ev.course.titre)}</h4>
+                    </div>
+                    <div class="font-mono text-[9px] font-semibold opacity-75 shrink-0">${esc(ev.slot.heure_debut)} – ${esc(ev.slot.heure_fin)}</div>
+                    ${ev.slot.lieu ? `<div class="text-[9px] font-sans font-medium opacity-80 [overflow-wrap:anywhere] mt-0.5 shrink-0">${esc(ev.slot.lieu)}</div>` : ''}
+                </div>
+                `;
+                        colDOM.appendChild(card);
+                    });
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>

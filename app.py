@@ -20,6 +20,10 @@ def get_db():
 def index():
     return render_template("index.html")
 
+@app.route("/schedule")
+def schedule():
+    return render_template("schedule.html")
+
 @app.route("/api/courses")
 def api_courses():
     query = request.args.get("q", "").strip()
@@ -77,6 +81,53 @@ def api_courses():
         types = [r[0] for r in conn.execute("SELECT DISTINCT type FROM courses WHERE type != '' AND type IS NOT NULL AND type != '-' ORDER BY type").fetchall()]
 
     return jsonify(courses=[dict(r) for r in rows], departments=depts, types=types)
+
+@app.route("/api/plannable_courses", methods=["GET"])
+def get_plannable_courses():
+    conn = get_db()
+    cur = conn.cursor()
+    query = """
+        SELECT 
+            c.id AS course_id, c.departement, c.titre, c.type, c.ects,
+            c.volume_horaire, c.periode, c.code_ue, c.lien, c.notes,
+            s.id AS schedule_id, s.jour, s.heure_debut, s.heure_fin, s.lieu, s.horaire_brut
+        FROM courses c
+        JOIN schedules s ON c.id = s.course_id
+        WHERE s.jour IS NOT NULL AND s.jour != ''
+          AND s.heure_debut IS NOT NULL AND s.heure_debut != ''
+          AND s.heure_fin IS NOT NULL AND s.heure_fin != ''
+        ORDER BY c.id, s.id
+    """
+    rows = cur.execute(query).fetchall()
+    conn.close()
+
+    courses = {}
+    for row in rows:
+        cid = row["course_id"]
+        if cid not in courses:
+            courses[cid] = {
+                "id": cid,
+                "departement": row["departement"],
+                "titre": row["titre"],
+                "type": row["type"],
+                "ects": row["ects"],
+                "volume_horaire": row["volume_horaire"],
+                "periode": row["periode"],
+                "code_ue": row["code_ue"],
+                "lien": row["lien"],
+                "notes": row["notes"],
+                "schedules": []
+            }
+        courses[cid]["schedules"].append({
+            "id": row["schedule_id"],
+            "jour": row["jour"],
+            "heure_debut": row["heure_debut"],
+            "heure_fin": row["heure_fin"],
+            "lieu": row["lieu"],
+            "horaire_brut": row["horaire_brut"]
+        })
+
+    return jsonify(list(courses.values()))
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

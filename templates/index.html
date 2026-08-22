@@ -1,73 +1,142 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PluriENS</title>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='ens-ulm-logo.png') }}">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = { theme: { extend: {
-      fontFamily: { serif: ['"Cormorant Garamond"', 'serif'], sans: ['Inter', 'sans-serif'] },
-      colors: { paper: '#FDFBF7', ink: '#1C1917', bordeaux: '#8A1538', bord: '#E7E5E4' }
-    }}}
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { serif: ['"Cormorant Garamond"', 'serif'], sans: ['Inter', 'sans-serif'] },
+          colors: { paper: '#FDFBF7', ink: '#1C1917', bordeaux: '#8A1538', bord: '#E7E5E4' }
+        }
+      }
+    }
   </script>
   <style>
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
-    .entry-spawn { animation: fadeIn 0.2s ease-out forwards; }
-    select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 0.25rem center; background-size: 1em; }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(2px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .entry-spawn {
+      animation: fadeIn 0.2s ease-out forwards;
+    }
+
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 0.25rem center;
+      background-size: 1em;
+    }
   </style>
 </head>
+
 <body class="bg-paper text-ink min-h-screen font-sans selection:bg-bordeaux selection:text-white">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-    <header class="mb-10 border-b-[3px] border-transparent pb-6 flex flex-col md:flex-row md:items-end justify-between gap-6" style="border-image: linear-gradient(to right, #8A1538, #1e3a8a, #065f46, #b45309) 1;">
+    <header
+      class="mb-10 border-b-[3px] border-transparent pb-6 flex flex-col md:flex-row md:items-end justify-between gap-6"
+      style="border-image: linear-gradient(to right, #8A1538, #1e3a8a, #065f46, #b45309) 1;">
       <div class="max-w-2xl flex items-center gap-4">
-        <img src={{ url_for('static', filename='ens-ulm-logo.png') }} alt="Logo ENS Ulm" class="h-12 w-auto object-contain shrink-0">
+        <img src="{{ url_for('static', filename='ens-ulm-logo.png' ) }}" alt="Logo ENS Ulm"
+          class="h-12 w-auto object-contain shrink-0">
         <div>
           <h1 class="text-4xl md:text-5xl font-bold font-serif text-ink tracking-tight mb-2">PluriENS</h1>
-          <p class="text-lg text-stone-600 font-serif italic leading-snug">Catalogue des cours de l'ENS PSL accessibles à tous les étudiants.</p>
+          <p class="text-lg text-stone-600 font-serif italic leading-snug">Catalogue des cours de l'ENS PSL accessibles
+            à tous les étudiants.</p>
         </div>
       </div>
-      <div class="text-xs text-stone-500 md:text-right font-sans max-w-xs uppercase tracking-widest leading-relaxed">
-        <span class="block text-ink font-semibold mb-1">2026/2027</span>
-        Contact : <a href="mailto:justin.monteilhet@ens.psl.eu" class="text-bordeaux hover:underline">justin.monteilhet@ens.psl.eu</a>
+
+      <div class="flex flex-col md:items-end gap-3">
+        <nav class="flex bg-stone-200/80 p-1 rounded-lg border border-stone-300 font-sans">
+          <a href="/"
+            class="px-5 py-2 rounded-md font-bold text-xs uppercase tracking-wider bg-white text-bordeaux shadow-sm">
+            Catalogue
+          </a>
+          <a href="/schedule"
+            class="px-5 py-2 rounded-md font-medium text-xs uppercase tracking-wider text-stone-600 hover:text-ink transition-colors">
+            Planning
+          </a>
+        </nav>
+        <div class="text-xs text-stone-500 md:text-right font-sans uppercase tracking-widest leading-relaxed">
+          <span class="block text-ink font-semibold">2026/2027</span>
+          Contact : <a href="mailto:justin.monteilhet@ens.psl.eu"
+            class="text-bordeaux hover:underline">justin.monteilhet@ens.psl.eu</a>
+        </div>
       </div>
     </header>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
       <main class="lg:col-span-9">
         <div class="flex flex-col sm:flex-row flex-wrap gap-4 mb-8 pb-6 border-b border-bord text-sm">
-          <input type="text" id="search" placeholder="Recherche par mot-clé..." class="flex-1 min-w-[200px] pb-1 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux placeholder:text-stone-400 font-serif text-lg italic transition-colors">
+          <input type="text" id="search" placeholder="Recherche par mot-clé..."
+            class="flex-1 min-w-[200px] pb-1 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux placeholder:text-stone-400 font-serif text-lg italic transition-colors">
           <div class="flex gap-3 flex-wrap">
-            <select id="dept" class="pb-1 pr-6 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux text-stone-700 cursor-pointer font-medium uppercase tracking-wider text-[10px]"><option value="">Départements (Tous)</option></select>
-            <select id="type" class="pb-1 pr-6 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux text-stone-700 cursor-pointer font-medium uppercase tracking-wider text-[10px]">
-              <option value="">Type (Tous)</option><option value="cours">Cours</option><option value="seminaire">Séminaire</option><option value="atelier">Atelier</option>
+            <select id="dept"
+              class="pb-1 pr-6 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux text-stone-700 cursor-pointer font-medium uppercase tracking-wider text-[10px]">
+              <option value="">Départements (Tous)</option>
             </select>
-            <select id="periode" class="pb-1 pr-6 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux text-stone-700 cursor-pointer font-medium uppercase tracking-wider text-[10px]">
-              <option value="">Période (Toutes)</option><option value="Semestre 1">Semestre 1</option><option value="Semestre 2">Semestre 2</option><option value="Année">Annuel</option>
+            <select id="type"
+              class="pb-1 pr-6 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux text-stone-700 cursor-pointer font-medium uppercase tracking-wider text-[10px]">
+              <option value="">Type (Tous)</option>
+              <option value="cours">Cours</option>
+              <option value="seminaire">Séminaire</option>
+              <option value="atelier">Atelier</option>
             </select>
-            <select id="jour" class="pb-1 pr-6 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux text-stone-700 cursor-pointer font-medium uppercase tracking-wider text-[10px]">
-              <option value="">Jour (Tous)</option><option value="Lundi">Lundi</option><option value="Mardi">Mardi</option><option value="Mercredi">Mercredi</option><option value="Jeudi">Jeudi</option><option value="Vendredi">Vendredi</option>
+            <select id="periode"
+              class="pb-1 pr-6 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux text-stone-700 cursor-pointer font-medium uppercase tracking-wider text-[10px]">
+              <option value="">Période (Toutes)</option>
+              <option value="Semestre 1">Semestre 1</option>
+              <option value="Semestre 2">Semestre 2</option>
+              <option value="Année">Annuel</option>
+            </select>
+            <select id="jour"
+              class="pb-1 pr-6 bg-transparent border-b border-stone-300 focus:outline-none focus:border-bordeaux text-stone-700 cursor-pointer font-medium uppercase tracking-wider text-[10px]">
+              <option value="">Jour (Tous)</option>
+              <option value="Lundi">Lundi</option>
+              <option value="Mardi">Mardi</option>
+              <option value="Mercredi">Mercredi</option>
+              <option value="Jeudi">Jeudi</option>
+              <option value="Vendredi">Vendredi</option>
             </select>
           </div>
         </div>
 
         <div class="flex justify-between items-baseline mb-6">
           <div id="count" class="text-xs font-bold text-stone-900 uppercase tracking-widest font-sans"></div>
-          <button onclick="openForm('Ajout', null)" class="text-[11px] uppercase tracking-widest font-bold px-4 py-2 bg-bordeaux text-white hover:bg-stone-900 transition-colors flex items-center gap-2">
+          <button onclick="openForm('Ajout', null)"
+            class="text-[11px] uppercase tracking-widest font-bold px-4 py-2 bg-bordeaux text-white hover:bg-stone-900 transition-colors flex items-center gap-2">
             <span>+</span> Soumettre une entrée
           </button>
         </div>
-        
-        <div id="grid" class="grid grid-cols-1 md:grid-cols-2 gap-0 border-t-2 border-ink transition-opacity duration-200 relative"></div>
+
+        <div id="grid"
+          class="grid grid-cols-1 md:grid-cols-2 gap-0 border-t-2 border-ink transition-opacity duration-200 relative">
+        </div>
       </main>
 
       <aside class="lg:col-span-3">
         <div class="sticky top-8">
-          <h3 class="font-bold text-ink mb-4 uppercase tracking-widest text-[11px] font-sans border-b border-bord pb-2">Etat du catalogue</h3>
+          <h3 class="font-bold text-ink mb-4 uppercase tracking-widest text-[11px] font-sans border-b border-bord pb-2">
+            Etat du catalogue</h3>
           <div class="mb-6">
-            <div class="flex items-center gap-2 font-semibold text-[10px] uppercase tracking-widest text-emerald-800 mb-3">
+            <div
+              class="flex items-center gap-2 font-semibold text-[10px] uppercase tracking-widest text-emerald-800 mb-3">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-700"></span>Catalogues complets
             </div>
             <div class="flex flex-wrap gap-2 text-[10px] font-medium tracking-wider text-stone-600 uppercase">
@@ -78,11 +147,21 @@
             <div class="flex items-center gap-2 font-semibold text-[10px] uppercase tracking-widest text-red-800 mb-3">
               <span class="w-1.5 h-1.5 rounded-full bg-red-700"></span>Catalogues absents
             </div>
-            <div class="flex justify-between items-center group"><span class="font-medium text-stone-700">Chimie</span><span class="text-[9px] uppercase tracking-widest text-amber-700">EDT pas à jour</span></div>
-            <div class="flex justify-between items-center group"><span class="font-medium text-stone-700">Économie</span><span class="text-[9px] uppercase tracking-widest text-amber-700">Site pas à jour</span></div>
-            <div class="flex justify-between items-center group"><span class="font-medium text-stone-700">Géosciences</span><span class="text-[9px] uppercase tracking-widest text-amber-700">Site pas à jour</span></div>
-            <div class="flex justify-between items-center group"><span class="font-medium text-stone-700">Sc. sociales</span><span class="text-[9px] uppercase tracking-widest text-amber-700">Site pas à jour</span></div>
-            <div class="flex justify-between items-center group"><span class="font-medium text-stone-700">Géographie</span><span class="text-[9px] uppercase tracking-widest text-red-700 font-bold">Indisponible</span></div>
+            <div class="flex justify-between items-center group"><span
+                class="font-medium text-stone-700">Chimie</span><span
+                class="text-[9px] uppercase tracking-widest text-amber-700">EDT pas à jour</span></div>
+            <div class="flex justify-between items-center group"><span
+                class="font-medium text-stone-700">Économie</span><span
+                class="text-[9px] uppercase tracking-widest text-amber-700">Site pas à jour</span></div>
+            <div class="flex justify-between items-center group"><span
+                class="font-medium text-stone-700">Géosciences</span><span
+                class="text-[9px] uppercase tracking-widest text-amber-700">Site pas à jour</span></div>
+            <div class="flex justify-between items-center group"><span class="font-medium text-stone-700">Sc.
+                sociales</span><span class="text-[9px] uppercase tracking-widest text-amber-700">Site pas à jour</span>
+            </div>
+            <div class="flex justify-between items-center group"><span
+                class="font-medium text-stone-700">Géographie</span><span
+                class="text-[9px] uppercase tracking-widest text-red-700 font-bold">Indisponible</span></div>
           </div>
         </div>
       </aside>
@@ -139,7 +218,7 @@
       if (!confirm(msg)) return;
       const typeFmt = c.type ? c.type.charAt(0).toUpperCase() + c.type.slice(1).toLowerCase() : '';
       const params = new URLSearchParams({
-        action: {'Ajout': 'Ajouter un cours', 'Modif': 'Modifier un cours', 'Suppr': 'Supprimer un cours'}[actionCode] || '',
+        action: { 'Ajout': 'Ajouter un cours', 'Modif': 'Modifier un cours', 'Suppr': 'Supprimer un cours' }[actionCode] || '',
         id: c.id || '', titre: c.titre || '', departement: c.departement || '', type: typeFmt, periode: c.periode || '',
         jour: c.jour || '', lieu: c.lieu || '', lien: c.lien || '', ects: c.ects || '', volume_horaire: c.volume_horaire || '', professeur: c.professeurs || '',
         horaire: c.horaire_brut || c.horaire_affichage || ''
@@ -155,7 +234,7 @@
         type: document.getElementById('type').value, periode: document.getElementById('periode').value,
         jour: document.getElementById('jour').value
       });
-      
+
       const res = await fetch(`/api/courses?${params}`);
       const data = await res.json();
       currentCourses = data.courses;
@@ -166,7 +245,7 @@
         deptsLoaded = true;
       }
       document.getElementById('count').textContent = `${data.courses.length} ENTRÉES RÉPERTORIÉES`;
-      
+
       grid.innerHTML = data.courses.map((c, index) => {
         const num = String(index + 1).padStart(3, '0');
         const titre = esc(c.titre);
@@ -213,4 +292,5 @@
     loadCourses();
   </script>
 </body>
+
 </html>
