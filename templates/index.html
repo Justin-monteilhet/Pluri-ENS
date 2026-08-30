@@ -140,21 +140,15 @@
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-700"></span>Catalogues complets
             </div>
             <div class="flex flex-wrap gap-2 text-[10px] font-medium tracking-wider text-stone-600 uppercase">
-              <span>Arts</span>·<span>Bio</span>·<span>CERES</span>·<span>CIENS</span>·<span>DEC</span>·<span>DSA</span>·<span>ECLA</span>·<span>Histoire</span>·<span>Info</span>·<span>LILA</span>·<span>Maths</span>·<span>Philo</span>·<span>Physique</span>·<span>Chimie</span>
+              <span>Arts</span>·<span>Bio</span>·<span>CERES</span>·<span>CIENS</span>·<span>DEC</span>·<span>DSA</span>·<span>ECLA</span>·<span>Histoire</span>·<span>Info</span>·<span>LILA</span>·<span>Maths</span>·<span>Philo</span>·<span>Physique</span>·<span>Chimie</span>·<span>Économie</span>·<span>Géosciences</span>
             </div>
           </div>
           <div class="space-y-3 border-t border-bord pt-4 text-xs font-sans">
             <div class="flex items-center gap-2 font-semibold text-[10px] uppercase tracking-widest text-red-800 mb-3">
               <span class="w-1.5 h-1.5 rounded-full bg-red-700"></span>Catalogues absents
             </div>
-            <div class="flex justify-between items-center group"><span
-                class="font-medium text-stone-700">Économie</span><span
-                class="text-[9px] uppercase tracking-widest text-amber-700">Site pas à jour</span></div>
-            <div class="flex justify-between items-center group"><span
-                class="font-medium text-stone-700">Géosciences</span><span
-                class="text-[9px] uppercase tracking-widest text-amber-700">Site pas à jour</span></div>
             <div class="flex justify-between items-center group"><span class="font-medium text-stone-700">Sc.
-                sociales</span><span class="text-[9px] uppercase tracking-widest text-amber-700">Site pas à jour</span>
+                sociales</span><span class="text-[9px] uppercase tracking-widest text-red-700 font-bold">Indisponible</span>
             </div>
             <div class="flex justify-between items-center group"><span
                 class="font-medium text-stone-700">Géographie</span><span
@@ -183,7 +177,11 @@
       'LILA': { text: 'text-fuchsia-900', bg: 'bg-fuchsia-50/60 hover:bg-fuchsia-100/60' },
       'ECLA': { text: 'text-pink-900', bg: 'bg-pink-50/60 hover:bg-pink-100/60' },
       'DSA': { text: 'text-yellow-900', bg: 'bg-yellow-50/60 hover:bg-yellow-100/60' },
-      'CIENS': { text: 'text-red-900', bg: 'bg-red-50/60 hover:bg-red-100/60' }
+      'CIENS': { text: 'text-red-900', bg: 'bg-red-50/60 hover:bg-red-100/60' },
+      'ÉCONOMIE': { text: 'text-violet-900', bg: 'bg-violet-50/60 hover:bg-violet-100/60' },
+      'SCIENCES SOCIALES': { text: 'text-zinc-800', bg: 'bg-zinc-100/60 hover:bg-zinc-200/60' },
+      'GÉOGRAPHIE': { text: 'text-green-900', bg: 'bg-green-50/60 hover:bg-green-100/60' },
+      'GÉOSCIENCES': { text: 'text-amber-800', bg: 'bg-amber-100/60 hover:bg-amber-200/60' },
     };
     const getDeptTheme = (dept) => DEPT_COLORS[dept] || { text: 'text-stone-600', bg: 'bg-[#F9F8F6] hover:bg-[#F2EFE9]' };
 
