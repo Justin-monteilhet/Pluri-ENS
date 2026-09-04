@@ -52,7 +52,6 @@
 
 <body
     class="bg-paper text-ink min-h-screen font-sans selection:bg-bordeaux selection:text-white flex flex-col [scrollbar-gutter:stable]">
-    <!-- Remplacer max-w-[1600px] par max-w-[1920px] ou max-w-none -->
     <div class="w-full max-w-[1920px] mx-auto px-4 py-6 flex-1 flex flex-col">
 
         <header
@@ -64,8 +63,7 @@
                 <div>
                     <h1 class="text-4xl md:text-5xl font-bold font-serif text-ink tracking-tight mb-2">PluriENS</h1>
                     <p class="text-lg text-stone-600 font-serif italic leading-snug">Catalogue des cours de l'ENS PSL
-                        accessibles
-                        à tous les étudiants.</p>
+                        accessibles à tous les étudiants.</p>
                 </div>
             </div>
 
@@ -90,7 +88,6 @@
 
         <div class="w-full mx-auto px-4 md:px-6 py-4 flex flex-col xl:flex-row gap-6 items-start">
 
-            <!-- Panneau latéral -->
             <aside class="w-full xl:w-80 shrink-0 bg-white border border-bord rounded-md flex flex-col">
                 <div class="p-4 border-b border-bord bg-[#F9F8F6] space-y-3 shrink-0">
                     <div class="flex justify-between items-baseline">
@@ -122,17 +119,19 @@
                         </select>
                     </div>
                 </div>
-                <!-- Ajout d'une limite de hauteur sur mobile (max-h-[40vh]) pour pouvoir scroller vers la grille -->
                 <div id="course-list" class="flex-1 max-h-[40vh] xl:max-h-none overflow-y-auto p-4 space-y-3"></div>
             </aside>
 
-            <!-- Zone du Planning -->
             <main class="flex-1 w-full min-w-0 bg-white border border-bord rounded-md overflow-hidden">
                 <div
                     class="p-4 border-b border-bord bg-[#F9F8F6] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
                     <h2 class="font-bold text-ink uppercase tracking-widest text-[11px] pt-1">Grille Hebdomadaire</h2>
                     <div class="flex flex-col items-end gap-1.5 w-full sm:w-auto">
                         <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                            <button onclick="document.getElementById('custom-modal').classList.remove('hidden')"
+                                class="h-9 px-3.5 mr-2 text-xs font-medium text-stone-100 bg-[#800020] hover:bg-stone-900 rounded-md transition-colors flex items-center">
+                                + Événement
+                            </button>
                             <button onclick="clearSchedule()"
                                 class="h-9 px-3.5 text-xs font-medium text-[#800020] bg-stone-200 hover:bg-stone-300 rounded-md transition-colors flex items-center justify-center">Vider</button>
                             <div class="h-9 flex items-stretch bg-stone-200 rounded-md overflow-hidden">
@@ -176,8 +175,6 @@
 
                 <div class="overflow-x-auto touch-pan-x" id="planning-grid">
                     <div class="min-w-[650px]">
-                        <!-- Le reste du code de la grille (jours et heures) reste strictement identique ici -->
-                        <!-- En-tête des jours -->
                         <div
                             class="grid grid-cols-11 border-b border-stone-300 bg-[#F2EFE9] text-[11px] font-bold uppercase tracking-wider text-stone-700 text-center py-2.5">
                             <div class="col-span-1 border-r border-stone-300">Heure</div>
@@ -189,7 +186,6 @@
                         </div>
 
                         <div class="relative bg-paper pt-3 pb-4">
-                            <!-- Grille d'arrière-plan -->
                             <div class="divide-y divide-stone-300 border-b border-stone-300">
                                 <div class="grid grid-cols-11 h-16">
                                     <div class="col-span-1 border-r border-stone-300 relative"><span
@@ -318,7 +314,6 @@
                                 </div>
                             </div>
 
-                            <!-- Calque applicatif des cours -->
                             <div class="absolute inset-0 pt-3 pb-4 grid grid-cols-11 pointer-events-none">
                                 <div class="col-span-1"></div>
                                 <div id="col-Lundi" class="col-span-2 relative pointer-events-auto"></div>
@@ -332,14 +327,89 @@
                 </div>
             </main>
         </div>
+    </div>
 
+    <div id="custom-modal"
+        class="hidden fixed inset-0 bg-stone-900/50 z-50 flex items-center justify-center backdrop-blur-sm">
+        <form onsubmit="saveCustomCourse(event)"
+            class="bg-paper p-6 rounded-md w-full max-w-sm border border-bord shadow-xl">
+            <h3 class="font-bold text-ink mb-4 uppercase tracking-widest text-[11px]">Ajouter un événement</h3>
+            <div id="custom-error" class="text-red-500 text-[10px] hidden mb-2"></div>
+
+            <input name="titre" required placeholder="Titre"
+                class="w-full mb-3 pb-1 border-b border-stone-300 bg-transparent text-sm focus:outline-none focus:border-bordeaux">
+            <input name="lieu" placeholder="Lieu"
+                class="w-full mb-4 pb-1 border-b border-stone-300 bg-transparent text-sm focus:outline-none focus:border-bordeaux">
+
+            <div class="grid grid-cols-3 gap-3 mb-4">
+                <select name="jour" required
+                    class="col-span-1 text-xs pb-1 border-b border-stone-300 bg-transparent focus:outline-none">
+                    <option value="Lundi">Lundi</option>
+                    <option value="Mardi">Mardi</option>
+                    <option value="Mercredi">Mercredi</option>
+                    <option value="Jeudi">Jeudi</option>
+                    <option value="Vendredi">Vendredi</option>
+                </select>
+                <input type="time" name="debut" required
+                    class="col-span-1 text-xs pb-1 border-b border-stone-300 bg-transparent focus:outline-none">
+                <input type="time" name="fin" required
+                    class="col-span-1 text-xs pb-1 border-b border-stone-300 bg-transparent focus:outline-none">
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-[10px] uppercase font-bold text-stone-500 mb-2">Couleur</label>
+                <div class="flex gap-3 items-center">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="couleur" value="stone" checked class="peer hidden">
+                        <span
+                            class="block w-6 h-6 rounded-full bg-stone-300 border border-stone-400 peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-stone-600 transition-all"></span>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="couleur" value="blue" class="peer hidden">
+                        <span
+                            class="block w-6 h-6 rounded-full bg-blue-300 border border-blue-400 peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-blue-600 transition-all"></span>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="couleur" value="green" class="peer hidden">
+                        <span
+                            class="block w-6 h-6 rounded-full bg-green-300 border border-green-400 peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-green-600 transition-all"></span>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="couleur" value="red" class="peer hidden">
+                        <span
+                            class="block w-6 h-6 rounded-full bg-red-300 border border-red-400 peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-red-600 transition-all"></span>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="couleur" value="purple" class="peer hidden">
+                        <span
+                            class="block w-6 h-6 rounded-full bg-purple-300 border border-purple-400 peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-purple-600 transition-all"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="document.getElementById('custom-modal').classList.add('hidden')"
+                    class="text-xs text-stone-500 hover:text-ink">Annuler</button>
+                <button type="submit"
+                    class="px-4 py-2 bg-bordeaux text-white text-[10px] uppercase tracking-widest font-bold rounded-sm">Créer</button>
+            </div>
+        </form>
     </div>
 
     <script>
         let selectedCourseIds = JSON.parse(localStorage.getItem('savedSchedule')) || [];
         let allPlannableCourses = [];
+        let customCourses = JSON.parse(localStorage.getItem('customCourses')) || [];
 
         const esc = (str) => String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+
+        const CUSTOM_COLORS = {
+            stone: { bg: 'bg-stone-200 hover:bg-stone-300', border: 'border-l-stone-500 border-stone-300', text: 'text-stone-900' },
+            blue: { bg: 'bg-blue-200 hover:bg-blue-300', border: 'border-l-blue-500 border-stone-300', text: 'text-blue-900' },
+            green: { bg: 'bg-green-200 hover:bg-green-300', border: 'border-l-green-500 border-stone-300', text: 'text-green-900' },
+            red: { bg: 'bg-red-200 hover:bg-red-300', border: 'border-l-red-500 border-stone-300', text: 'text-red-900' },
+            purple: { bg: 'bg-purple-200 hover:bg-purple-300', border: 'border-l-purple-500 border-stone-300', text: 'text-purple-900' }
+        };
 
         function saveSchedule() {
             localStorage.setItem('savedSchedule', JSON.stringify(selectedCourseIds));
@@ -358,15 +428,22 @@
             if (!confirm("Voulez-vous vraiment vider tout l'emploi du temps ?")) return;
 
             selectedCourseIds = [];
-
-            // Supprime la sauvegarde dans le stockage local
-            localStorage.removeItem('savedSchedule'); // Remplace par ta clé si différente
+            localStorage.removeItem('savedSchedule');
 
             renderGrid();
             if (typeof renderCourseList === 'function') renderCourseList();
         }
 
         function removeCourseFromSchedule(id) {
+            if (String(id).startsWith('custom_')) {
+                customCourses = customCourses.filter(c => c.id !== id);
+                localStorage.setItem('customCourses', JSON.stringify(customCourses));
+                allPlannableCourses = allPlannableCourses.filter(c => c.id !== id);
+                selectedCourseIds = selectedCourseIds.filter(cid => cid !== id);
+                saveSchedule();
+                updateUI();
+                return;
+            }
             selectedCourseIds = selectedCourseIds.filter(cid => cid !== id);
             saveSchedule();
             updateUI();
@@ -395,7 +472,6 @@
                     const start = `202609${dNum}T${s.heure_debut.replace(':', '')}00`;
                     const end = `202609${dNum}T${s.heure_fin.replace(':', '')}00`;
 
-                    // Fixed deterministic UID ensures re-imports overwrite rather than duplicate
                     const uid = `edt-${c.id}-${s.jour}-${s.heure_debut.replace(':', '')}@planning.app`;
 
                     ics += `BEGIN:VEVENT\n`;
@@ -443,7 +519,6 @@
                             clonedElement.style.overflow = 'visible';
                         }
 
-                        // Convertit le -webkit-line-clamp CSS en vrai texte tronqué avec '…' pour le rendu PDF
                         const headers = clonedDoc.querySelectorAll('.group h4');
                         headers.forEach(h => {
                             const clamp = h.style.webkitLineClamp;
@@ -461,7 +536,6 @@
                             h.style.overflow = 'hidden';
                         });
 
-                        // Corrige le bug de superposition du texte
                         const nodes = clonedDoc.querySelectorAll('.group h4, .group div');
                         nodes.forEach(n => {
                             n.style.overflowWrap = 'break-word';
@@ -482,9 +556,10 @@
         async function loadPlannableCourses() {
             const res = await fetch('/api/plannable_courses');
             allPlannableCourses = await res.json();
+            customCourses.forEach(c => allPlannableCourses.push(c));
             populateDeptFilter();
             renderCourseList();
-            renderGrid(); // Corrige le rafraîchissement de la grille au chargement
+            renderGrid();
         }
 
         function populateDeptFilter() {
@@ -493,7 +568,6 @@
             depts.forEach(d => select.add(new Option(d, d)));
         }
 
-        // Remplit le selecteur de période dynamiquement
         function populatePeriodeOptions() {
             const select = document.getElementById('sch-periode');
             if (!select) return;
@@ -519,7 +593,6 @@
         }
 
         function renderCourseList() {
-            // Peuple le selecteur si pas encore fait
             const selectPeriode = document.getElementById('sch-periode');
             if (selectPeriode && selectPeriode.options.length <= 1 && allPlannableCourses.length > 0) {
                 populatePeriodeOptions();
@@ -571,11 +644,11 @@
           </div>
           <div class="pt-2 border-t border-dashed border-stone-200 flex justify-end">
             ${isSelected ? `
-              <button onclick="removeCourseFromSchedule(${c.id})" class="px-2 py-1 bg-stone-200 text-stone-800 hover:bg-stone-300 text-[10px] uppercase tracking-wider font-bold rounded-sm transition-colors">
+              <button onclick="removeCourseFromSchedule('${c.id}')" class="px-2 py-1 bg-stone-200 text-stone-800 hover:bg-stone-300 text-[10px] uppercase tracking-wider font-bold rounded-sm transition-colors">
                 - Retirer
               </button>
             ` : `
-              <button onclick="addCourseToSchedule(${c.id})" class="px-2 py-1 bg-bordeaux text-white hover:bg-stone-900 text-[10px] uppercase tracking-wider font-bold rounded-sm transition-colors">
+              <button onclick="addCourseToSchedule('${c.id}')" class="px-2 py-1 bg-bordeaux text-white hover:bg-stone-900 text-[10px] uppercase tracking-wider font-bold rounded-sm transition-colors">
                 + Ajouter
               </button>
             `}
@@ -584,11 +657,41 @@
       `;
             }).join('');
         }
+
         ['sch-search', 'sch-dept', 'sch-jour', 'sch-periode'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('input', renderCourseList);
         });
 
+        function saveCustomCourse(e) {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const debut = fd.get('debut'), fin = fd.get('fin');
+            const err = document.getElementById('custom-error');
+
+            if (debut >= fin) {
+                err.textContent = "L'heure de début doit précéder l'heure de fin.";
+                err.classList.remove('hidden');
+                return;
+            }
+            err.classList.add('hidden');
+
+            const newCourse = {
+                id: 'custom_' + Date.now(),
+                titre: fd.get('titre'),
+                departement: 'PERSO',
+                couleur: fd.get('couleur'),
+                schedules: [{ jour: fd.get('jour'), heure_debut: debut, heure_fin: fin, lieu: fd.get('lieu') }]
+            };
+
+            customCourses.push(newCourse);
+            localStorage.setItem('customCourses', JSON.stringify(customCourses));
+            allPlannableCourses.push(newCourse);
+            addCourseToSchedule(newCourse.id);
+
+            document.getElementById('custom-modal').classList.add('hidden');
+            e.target.reset();
+        }
 
         loadPlannableCourses();
     </script>
@@ -626,6 +729,7 @@
             'SCIENCES SOCIALES': { bg: 'bg-zinc-200 hover:bg-zinc-300', border: 'border-l-zinc-700 border-stone-300', text: 'text-zinc-950' },
             'GÉOGRAPHIE': { bg: 'bg-green-100 hover:bg-green-200', border: 'border-l-green-700 border-stone-300', text: 'text-green-950' },
             'GÉOSCIENCES': { bg: 'bg-amber-200 hover:bg-amber-300', border: 'border-l-amber-700 border-amber-300', text: 'text-amber-950' },
+            'PERSO': { bg: 'bg-stone-800 hover:bg-stone-900', border: 'border-l-stone-500 border-stone-700', text: 'text-stone-50' },
         };
 
         const getDeptTheme = (dept) => DEPT_COLORS[dept] || {
@@ -633,6 +737,13 @@
             border: 'border-l-stone-600 border-stone-300',
             text: 'text-stone-900'
         };
+
+        function getCourseTheme(course) {
+            if (course && course.couleur && CUSTOM_COLORS[course.couleur]) {
+                return CUSTOM_COLORS[course.couleur];
+            }
+            return getDeptTheme(course ? (course.departement || course.dept) : null);
+        }
 
         function timeToMins(t) {
             const [h, m] = t.split(':').map(Number);
@@ -701,11 +812,10 @@
 
                     cluster.forEach(ev => {
                         if (ev.height <= 0) return;
-                        const theme = getDeptTheme(ev.course.departement || ev.course.dept);
+                        const theme = getCourseTheme(ev.course);
                         const colWidth = 100 / numCols;
                         const w = colWidth * ev.colSpan, l = ev.colIdx * colWidth;
 
-                        // Nombre de lignes max selon la durée (ex: 1h=2L, 1h30=3L, 2h=5L, 3h=8L)
                         const duration = ev.end - ev.start;
                         const maxLines = Math.max(1, Math.floor((duration - 15) / 20));
 
@@ -716,7 +826,7 @@
 
                         card.innerHTML = `
                 <div class="absolute top-0 ${align} w-max h-max min-w-full min-h-full max-w-full max-h-full group-hover:max-w-[250px] group-hover:max-h-[800px] overflow-hidden p-1.5 flex flex-col ${theme.bg} ${theme.text} ${theme.border} border-y border-r border-l-4 shadow-xs group-hover:shadow-xl cursor-pointer transition-[max-width,max-height,box-shadow] duration-0 delay-0 group-hover:delay-300">
-                    <button onclick="event.stopPropagation(); removeCourseFromSchedule(${ev.course.id})" class="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 z-20 shrink-0 text-[9px] font-bold bg-stone-200/90 hover:bg-stone-300 px-1 py-0.5 rounded transition-opacity duration-75">✕</button>
+                    <button onclick="event.stopPropagation(); removeCourseFromSchedule('${ev.course.id}')" class="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 z-20 shrink-0 text-[9px] font-bold bg-stone-200/90 hover:bg-stone-300 px-1 py-0.5 rounded transition-opacity duration-75">✕</button>
                     <div class="flex-1 min-h-[14px] overflow-hidden pr-3.5 mb-1 group-hover:overflow-visible group-hover:flex-none">
                         <h4 class="font-sans text-[11px] font-semibold leading-tight text-stone-800 [overflow-wrap:anywhere] group-hover:block group-hover:overflow-visible" style="display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: ${maxLines}; overflow: hidden;">${esc(ev.course.titre)}</h4>
                     </div>
