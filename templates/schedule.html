@@ -555,7 +555,8 @@
 
         async function loadPlannableCourses() {
             const res = await fetch('/api/plannable_courses');
-            allPlannableCourses = await res.json();
+            data = await res.json();
+            allPlannableCourses = data.map(c => ({ ...c, id: String(c.id) }));
             customCourses.forEach(c => allPlannableCourses.push(c));
             populateDeptFilter();
             renderCourseList();
