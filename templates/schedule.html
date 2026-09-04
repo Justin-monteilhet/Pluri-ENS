@@ -397,7 +397,7 @@
     </div>
 
     <script>
-        let selectedCourseIds = JSON.parse(localStorage.getItem('savedSchedule')) || [];
+        let selectedCourseIds = (JSON.parse(localStorage.getItem('savedSchedule')) || []).map(String);
         let allPlannableCourses = [];
         let customCourses = JSON.parse(localStorage.getItem('customCourses')) || [];
 
@@ -416,8 +416,9 @@
         }
 
         function addCourseToSchedule(id) {
-            if (!selectedCourseIds.includes(id)) {
-                selectedCourseIds.push(id);
+            const strId = String(id);
+            if (!selectedCourseIds.includes(strId)) {
+                selectedCourseIds.push(strId);
                 saveSchedule();
                 updateUI();
             }
@@ -435,16 +436,17 @@
         }
 
         function removeCourseFromSchedule(id) {
-            if (String(id).startsWith('custom_')) {
-                customCourses = customCourses.filter(c => c.id !== id);
+            const strId = String(id);
+            if (strId.startsWith('custom_')) {
+                customCourses = customCourses.filter(c => String(c.id) !== strId);
                 localStorage.setItem('customCourses', JSON.stringify(customCourses));
-                allPlannableCourses = allPlannableCourses.filter(c => c.id !== id);
-                selectedCourseIds = selectedCourseIds.filter(cid => cid !== id);
+                allPlannableCourses = allPlannableCourses.filter(c => String(c.id) !== strId);
+                selectedCourseIds = selectedCourseIds.filter(cid => cid !== strId);
                 saveSchedule();
                 updateUI();
                 return;
             }
-            selectedCourseIds = selectedCourseIds.filter(cid => cid !== id);
+            selectedCourseIds = selectedCourseIds.filter(cid => cid !== strId);
             saveSchedule();
             updateUI();
         }
