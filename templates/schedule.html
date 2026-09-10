@@ -415,6 +415,12 @@
             localStorage.setItem('savedSchedule', JSON.stringify(selectedCourseIds));
         }
 
+        function normalizeDay(d) {
+            if (!d) return '';
+            const map = { lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi: 'Vendredi' };
+            return map[String(d).trim().toLowerCase()] || d;
+        }
+
         function addCourseToSchedule(id) {
             const strId = String(id);
             if (!selectedCourseIds.includes(strId)) {
@@ -457,34 +463,20 @@
         }
 
         function exportICS() {
-            const dayMap = {
-                'Lundi': ['02', 'MO'],
-                'Mardi': ['03', 'TU'],
-                'Mercredi': ['04', 'WE'],
-                'Jeudi': ['05', 'TH'],
-                'Vendredi': ['06', 'FR']
-            };
-
+            const dayMap = { 'Lundi': ['02', 'MO'], 'Mardi': ['03', 'TU'], 'Mercredi': ['04', 'WE'], 'Jeudi': ['05', 'TH'], 'Vendredi': ['06', 'FR'] };
             let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//EDT//FR\nCALSCALE:GREGORIAN\n";
             const semesterEnd = "20270131T235959Z";
 
             allPlannableCourses.filter(c => selectedCourseIds.includes(c.id)).forEach(c => {
-                c.schedules.forEach(s => {
-                    const [dNum, byDay] = dayMap[s.jour];
+                (c.schedules || []).forEach(s => {
+                    const dayKey = normalizeDay(s.jour);
+                    if (!dayMap[dayKey] || !s.heure_debut || !s.heure_fin) return;
+                    const [dNum, byDay] = dayMap[dayKey];
                     const start = `202609${dNum}T${s.heure_debut.replace(':', '')}00`;
                     const end = `202609${dNum}T${s.heure_fin.replace(':', '')}00`;
+                    const uid = `edt-${c.id}-${dayKey}-${s.heure_debut.replace(':', '')}@planning.app`;
 
-                    const uid = `edt-${c.id}-${s.jour}-${s.heure_debut.replace(':', '')}@planning.app`;
-
-                    ics += `BEGIN:VEVENT\n`;
-                    ics += `UID:${uid}\n`;
-                    ics += `DTSTART:${start}\n`;
-                    ics += `DTEND:${end}\n`;
-                    ics += `RRULE:FREQ=WEEKLY;BYDAY=${byDay};UNTIL=${semesterEnd}\n`;
-                    ics += `SUMMARY:[EDT] ${c.titre}\n`;
-                    ics += `CATEGORIES:Emploi du Temps\n`;
-                    ics += `LOCATION:${s.lieu || ''}\n`;
-                    ics += `END:VEVENT\n`;
+                    ics += `BEGIN:VEVENT\nUID:${uid}\nDTSTART:${start}\nDTEND:${end}\nRRULE:FREQ=WEEKLY;BYDAY=${byDay};UNTIL=${semesterEnd}\nSUMMARY:[EDT] ${c.titre}\nCATEGORIES:Emploi du Temps\nLOCATION:${s.lieu || ''}\nEND:VEVENT\n`;
                 });
             });
 
@@ -557,7 +549,7 @@
 
         async function loadPlannableCourses() {
             const res = await fetch('/api/plannable_courses');
-            data = await res.json();
+            const data = await res.json();
             allPlannableCourses = data.map(c => ({ ...c, id: String(c.id) }));
             customCourses.forEach(c => allPlannableCourses.push(c));
             populateDeptFilter();
@@ -609,12 +601,10 @@
             const filtered = allPlannableCourses.filter(c => {
                 const matchQ = !q || c.titre.toLowerCase().includes(q) || (c.notes && c.notes.toLowerCase().includes(q));
                 const matchDept = !dept || (c.departement || c.dept) === dept;
-                const matchJour = !jour || c.schedules.some(s => s.jour === jour);
+                const matchJour = !jour || (c.schedules || []).some(s => normalizeDay(s.jour) === jour);
 
                 const cPeriode = c.periode || c.period || c.semestre;
-                const matchPeriode = !periode ||
-                    cPeriode === periode ||
-                    (c.schedules && c.schedules.some(s => s.periode === periode));
+                const matchPeriode = !periode || cPeriode === periode || ((c.schedules || []).some(s => s.periode === periode));
 
                 return matchQ && matchDept && matchJour && matchPeriode;
             });
@@ -630,70 +620,35 @@
 
             listEl.innerHTML = filtered.map(c => {
                 const isSelected = selectedCourseIds.includes(c.id);
-                const slotsTxt = c.schedules.map(s => `${s.jour || ''} ${s.heure_debut || ''}-${s.heure_fin || ''}`).join(' | ');
+                const slotsTxt = (c.schedules || []).map(s => `${s.jour || ''} ${s.heure_debut || ''}-${s.heure_fin || ''}`).join(' | ');
                 const displayPeriode = c.periode || c.period || c.semestre || '';
 
                 return `
-        <div class="p-3 border ${isSelected ? 'border-bordeaux bg-rose-50/40' : 'border-bord bg-paper'} rounded-sm text-xs flex flex-col justify-between transition-colors">
-          <div>
-            <div class="flex justify-between items-start gap-2 mb-1">
-              <span class="text-[9px] font-bold uppercase tracking-widest text-stone-500">
-                ${esc(c.departement || c.dept || 'ENS')}${displayPeriode ? ` · ${esc(displayPeriode)}` : ''}
-              </span>
-              <span class="text-[9px] font-bold uppercase text-bordeaux">${esc(c.ects || '')}</span>
-            </div>
-            <h3 class="font-serif font-bold text-sm text-ink leading-tight mb-1">${esc(c.titre)}</h3>
-            <p class="text-[10px] text-stone-600 font-medium mb-2">${esc(slotsTxt)}</p>
-          </div>
-          <div class="pt-2 border-t border-dashed border-stone-200 flex justify-end">
-            ${isSelected ? `
-              <button onclick="removeCourseFromSchedule('${c.id}')" class="px-2 py-1 bg-stone-200 text-stone-800 hover:bg-stone-300 text-[10px] uppercase tracking-wider font-bold rounded-sm transition-colors">
-                - Retirer
-              </button>
-            ` : `
-              <button onclick="addCourseToSchedule('${c.id}')" class="px-2 py-1 bg-bordeaux text-white hover:bg-stone-900 text-[10px] uppercase tracking-wider font-bold rounded-sm transition-colors">
-                + Ajouter
-              </button>
-            `}
-          </div>
-        </div>
-      `;
+                    <div class="p-3 border ${isSelected ? 'border-bordeaux bg-rose-50/40' : 'border-bord bg-paper'} rounded-sm text-xs flex flex-col justify-between transition-colors">
+                    <div>
+                        <div class="flex justify-between items-start gap-2 mb-1">
+                        <span class="text-[9px] font-bold uppercase tracking-widest text-stone-500">
+                            ${esc(c.departement || c.dept || 'ENS')}${displayPeriode ? ` · ${esc(displayPeriode)}` : ''}
+                        </span>
+                        <span class="text-[9px] font-bold uppercase text-bordeaux">${esc(c.ects || '')}</span>
+                        </div>
+                        <h3 class="font-serif font-bold text-sm text-ink leading-tight mb-1">${esc(c.titre)}</h3>
+                        <p class="text-[10px] text-stone-600 font-medium mb-2">${esc(slotsTxt)}</p>
+                    </div>
+                    <div class="pt-2 border-t border-dashed border-stone-200 flex justify-end">
+                        ${isSelected ? `
+                        <button onclick="removeCourseFromSchedule('${c.id}')" class="px-2 py-1 bg-stone-200 text-stone-800 hover:bg-stone-300 text-[10px] uppercase tracking-wider font-bold rounded-sm transition-colors">
+                            - Retirer
+                        </button>
+                        ` : `
+                        <button onclick="addCourseToSchedule('${c.id}')" class="px-2 py-1 bg-bordeaux text-white hover:bg-stone-900 text-[10px] uppercase tracking-wider font-bold rounded-sm transition-colors">
+                            + Ajouter
+                        </button>
+                        `}
+                    </div>
+                    </div>
+                `;
             }).join('');
-        }
-
-        ['sch-search', 'sch-dept', 'sch-jour', 'sch-periode'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('input', renderCourseList);
-        });
-
-        function saveCustomCourse(e) {
-            e.preventDefault();
-            const fd = new FormData(e.target);
-            const debut = fd.get('debut'), fin = fd.get('fin');
-            const err = document.getElementById('custom-error');
-
-            if (debut >= fin) {
-                err.textContent = "L'heure de début doit précéder l'heure de fin.";
-                err.classList.remove('hidden');
-                return;
-            }
-            err.classList.add('hidden');
-
-            const newCourse = {
-                id: 'custom_' + Date.now(),
-                titre: fd.get('titre'),
-                departement: 'PERSO',
-                couleur: fd.get('couleur'),
-                schedules: [{ jour: fd.get('jour'), heure_debut: debut, heure_fin: fin, lieu: fd.get('lieu') }]
-            };
-
-            customCourses.push(newCourse);
-            localStorage.setItem('customCourses', JSON.stringify(customCourses));
-            allPlannableCourses.push(newCourse);
-            addCourseToSchedule(newCourse.id);
-
-            document.getElementById('custom-modal').classList.add('hidden');
-            e.target.reset();
         }
 
         loadPlannableCourses();
@@ -735,10 +690,9 @@
             'PERSO': { bg: 'bg-stone-800 hover:bg-stone-900', border: 'border-l-stone-500 border-stone-700', text: 'text-stone-50' },
         };
 
-        const getDeptTheme = (dept) => DEPT_COLORS[dept] || {
-            bg: 'bg-stone-200 hover:bg-stone-300',
-            border: 'border-l-stone-600 border-stone-300',
-            text: 'text-stone-900'
+        const getDeptTheme = (dept) => {
+            const key = String(dept || '').toUpperCase().trim();
+            return DEPT_COLORS[key] || { bg: 'bg-stone-200 hover:bg-stone-300', border: 'border-l-stone-600 border-stone-300', text: 'text-stone-900' };
         };
 
         function getCourseTheme(course) {
@@ -749,8 +703,9 @@
         }
 
         function timeToMins(t) {
+            if (!t || typeof t !== 'string' || !t.includes(':')) return 0;
             const [h, m] = t.split(':').map(Number);
-            return h * 60 + m;
+            return (h || 0) * 60 + (m || 0);
         }
 
         function renderGrid() {
@@ -764,8 +719,8 @@
 
             days.forEach(day => {
                 let dailySlots = [];
-                selectedCourses.forEach(c => c.schedules.forEach(s => {
-                    if (s.jour === day) {
+                selectedCourses.forEach(c => (c.schedules || []).forEach(s => {
+                    if (normalizeDay(s.jour) === day && s.heure_debut && s.heure_fin) {
                         dailySlots.push({
                             course: c, slot: s,
                             start: timeToMins(s.heure_debut), end: timeToMins(s.heure_fin),
@@ -828,15 +783,15 @@
                         card.style.left = `calc(${l}% + 1px)`; card.style.width = `calc(${w}% - 2px)`;
 
                         card.innerHTML = `
-                <div class="absolute top-0 ${align} w-max h-max min-w-full min-h-full max-w-full max-h-full group-hover:max-w-[250px] group-hover:max-h-[800px] overflow-hidden p-1.5 flex flex-col ${theme.bg} ${theme.text} ${theme.border} border-y border-r border-l-4 shadow-xs group-hover:shadow-xl cursor-pointer transition-[max-width,max-height,box-shadow] duration-0 delay-0 group-hover:delay-300">
-                    <button onclick="event.stopPropagation(); removeCourseFromSchedule('${ev.course.id}')" class="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 z-20 shrink-0 text-[9px] font-bold bg-stone-200/90 hover:bg-stone-300 px-1 py-0.5 rounded transition-opacity duration-75">✕</button>
-                    <div class="flex-1 min-h-[14px] overflow-hidden pr-3.5 mb-1 group-hover:overflow-visible group-hover:flex-none">
-                        <h4 class="font-sans text-[11px] font-semibold leading-tight text-stone-800 [overflow-wrap:anywhere] group-hover:block group-hover:overflow-visible" style="display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: ${maxLines}; overflow: hidden;">${esc(ev.course.titre)}</h4>
+                    <div class="absolute top-0 ${align} w-max h-max min-w-full min-h-full max-w-full max-h-full group-hover:max-w-[250px] group-hover:max-h-[800px] overflow-hidden p-1.5 flex flex-col ${theme.bg} ${theme.text} ${theme.border} border-y border-r border-l-4 shadow-xs group-hover:shadow-xl cursor-pointer transition-[max-width,max-height,box-shadow] duration-0 delay-0 group-hover:delay-300">
+                        <button onclick="event.stopPropagation(); removeCourseFromSchedule('${ev.course.id}')" class="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 z-20 shrink-0 text-[9px] font-bold bg-stone-200/90 hover:bg-stone-300 px-1 py-0.5 rounded transition-opacity duration-75">✕</button>
+                        <div class="flex-1 min-h-[14px] overflow-hidden pr-3.5 mb-1 group-hover:overflow-visible group-hover:flex-none">
+                            <h4 class="font-sans text-[11px] font-semibold leading-tight text-stone-800 [overflow-wrap:anywhere] group-hover:block group-hover:overflow-visible" style="display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: ${maxLines}; overflow: hidden;">${esc(ev.course.titre)}</h4>
+                        </div>
+                        <div class="font-mono text-[9px] font-semibold opacity-75 shrink-0">${esc(ev.slot.heure_debut)} – ${esc(ev.slot.heure_fin)}</div>
+                        ${ev.slot.lieu ? `<div class="text-[9px] font-sans font-medium opacity-80 [overflow-wrap:anywhere] mt-0.5 shrink-0">${esc(ev.slot.lieu)}</div>` : ''}
                     </div>
-                    <div class="font-mono text-[9px] font-semibold opacity-75 shrink-0">${esc(ev.slot.heure_debut)} – ${esc(ev.slot.heure_fin)}</div>
-                    ${ev.slot.lieu ? `<div class="text-[9px] font-sans font-medium opacity-80 [overflow-wrap:anywhere] mt-0.5 shrink-0">${esc(ev.slot.lieu)}</div>` : ''}
-                </div>
-                `;
+                    `;
                         colDOM.appendChild(card);
                     });
                 });

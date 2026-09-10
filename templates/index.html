@@ -141,15 +141,7 @@
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-700"></span>Catalogues complets
             </div>
             <div class="flex flex-wrap gap-2 text-[10px] font-medium tracking-wider text-stone-600 uppercase">
-              <span>Arts</span>·<span>Bio</span>·<span>CERES</span>·<span>CIENS</span>·<span>DEC</span>·<span>DSA</span>·<span>ECLA</span>·<span>Histoire</span>·<span>Info</span>·<span>LILA</span>·<span>Maths</span>·<span>Philo</span>·<span>Physique</span>·<span>Chimie</span>·<span>Économie</span>·<span>Géosciences</span>·<span>Géographie</span>
-            </div>
-          </div>
-          <div class="space-y-3 border-t border-bord pt-4 text-xs font-sans">
-            <div class="flex items-center gap-2 font-semibold text-[10px] uppercase tracking-widest text-red-800 mb-3">
-              <span class="w-1.5 h-1.5 rounded-full bg-red-700"></span>Catalogues absents
-            </div>
-            <div class="flex justify-between items-center group"><span class="font-medium text-stone-700">Sc.
-                sociales</span><span class="text-[9px] uppercase tracking-widest text-red-700 font-bold">Indisponible</span>
+              <span>Arts</span>·<span>Bio</span>·<span>CERES</span>·<span>CIENS</span>·<span>DEC</span>·<span>DSA</span>·<span>ECLA</span>·<span>Histoire</span>·<span>Info</span>·<span>LILA</span>·<span>Maths</span>·<span>Philo</span>·<span>Physique</span>·<span>Chimie</span>·<span>Économie</span>·<span>Géosciences</span>·<span>Géographie</span>·<span>Sciences sociales</span>
             </div>
           </div>
         </div>
@@ -203,7 +195,7 @@
     }
 
     function openForm(actionCode, id) {
-      let c = {}, msg = "Soumettre une nouvelle entrée au catalogue ?";
+      let c = {}, msg = "Attention : n'ajoutez un cours que si celui-ci est accessible à tous les étudiants de l'ENS. Pour tout besoin personnel, vous pouvez ajouter un cours personnalisé dans votre emploi du temps. \nSoumettre une nouvelle entrée au catalogue ?";
       if (actionCode !== 'Ajout') {
         c = currentCourses.find(course => String(course.id) === String(id));
         if (!c) return;
