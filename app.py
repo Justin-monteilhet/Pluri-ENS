@@ -26,7 +26,7 @@ def get_analytics_db():
 
 def init_analytics_db():
     with get_analytics_db() as conn:
-        conn.execute("""
+        r = conn.execute("""
             CREATE TABLE IF NOT EXISTS visits (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 ip_hash TEXT,
@@ -34,6 +34,7 @@ def init_analytics_db():
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        print(r.rows_affected)
 
 init_analytics_db()
 
@@ -44,8 +45,8 @@ def track_visit():
     ip = request.headers.get("X-Forwarded-For", request.remote_addr).split(",")[0].strip()
     salt = os.environ.get("IP_SALT", "default_salt")
     ip_hash = hashlib.sha256(f"{ip}{salt}".encode()).hexdigest()
-    today = datetime.utcnow().strftime("%Y-%m-%d")
-    with get_db() as conn:
+    today = datetime.now().strftime("%Y-%m-%d")
+    with get_analytics_db() as conn:
         conn.execute("INSERT INTO visits (ip_hash, date) VALUES (?, ?)", (ip_hash, today))
 
 @app.route("/")
@@ -55,17 +56,22 @@ def index():
 @app.route("/schedule")
 def schedule():
     return render_template("schedule.html")
-
 @app.route("/admin/stats")
 def admin_stats():
     admin_key = os.environ.get("ADMIN_KEY")
     if not admin_key or request.args.get("key") != admin_key:
         return "Unauthorized", 401
-    with get_db() as conn:
-        total = conn.execute("SELECT COUNT(*) FROM visits").fetchone()[0]
-        unique = conn.execute("SELECT COUNT(DISTINCT ip_hash) FROM visits").fetchone()[0]
-        today_unique = conn.execute("SELECT COUNT(DISTINCT ip_hash) FROM visits WHERE date = DATE('now')").fetchone()[0]
-    return jsonify({"total_visits": total, "unique_visitors": unique, "today_unique": today_unique})
+
+    with get_analytics_db() as conn:
+        total = conn.execute("SELECT COUNT(*) FROM visits").rows[0][0]
+        unique = conn.execute("SELECT COUNT(DISTINCT ip_hash) FROM visits").rows[0][0]
+        today_unique = conn.execute("SELECT COUNT(DISTINCT ip_hash) FROM visits WHERE date = DATE('now')").rows[0][0]
+
+    return jsonify({
+        "total_visits": total,
+        "unique_visitors": unique,
+        "today_unique": today_unique
+    })
 
 @app.route("/api/courses")
 def api_courses():
