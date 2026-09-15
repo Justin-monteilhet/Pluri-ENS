@@ -546,7 +546,13 @@
 
             html2pdf().set(opt).from(element).save();
         }
-
+        ['sch-search', 'sch-jour', 'sch-periode', 'sch-dept'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', renderCourseList);
+                el.addEventListener('change', renderCourseList);
+            }
+        });
         async function loadPlannableCourses() {
             const res = await fetch('/api/plannable_courses');
             const data = await res.json();

@@ -1,6 +1,9 @@
 import sqlite3
 import unicodedata
 import os
+import libsql_client
+import hashlib
+from datetime import datetime
 from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
@@ -16,6 +19,35 @@ def get_db():
     conn.create_function("STRIP_ACCENTS", 1, strip_accents)
     return conn
 
+def get_analytics_db():
+    url = os.environ.get("TURSO_DB_URL")
+    token = os.environ.get("TURSO_AUTH_TOKEN")
+    return libsql_client.create_client_sync(url=url, auth_token=token)
+
+def init_analytics_db():
+    with get_analytics_db() as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS visits (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ip_hash TEXT,
+                date TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+init_analytics_db()
+
+@app.before_request
+def track_visit():
+    if request.path.startswith("/static") or request.path.startswith("/admin") or request.path.startswith("/api"):
+        return
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr).split(",")[0].strip()
+    salt = os.environ.get("IP_SALT", "default_salt")
+    ip_hash = hashlib.sha256(f"{ip}{salt}".encode()).hexdigest()
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    with get_db() as conn:
+        conn.execute("INSERT INTO visits (ip_hash, date) VALUES (?, ?)", (ip_hash, today))
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -23,6 +55,17 @@ def index():
 @app.route("/schedule")
 def schedule():
     return render_template("schedule.html")
+
+@app.route("/admin/stats")
+def admin_stats():
+    admin_key = os.environ.get("ADMIN_KEY")
+    if not admin_key or request.args.get("key") != admin_key:
+        return "Unauthorized", 401
+    with get_db() as conn:
+        total = conn.execute("SELECT COUNT(*) FROM visits").fetchone()[0]
+        unique = conn.execute("SELECT COUNT(DISTINCT ip_hash) FROM visits").fetchone()[0]
+        today_unique = conn.execute("SELECT COUNT(DISTINCT ip_hash) FROM visits WHERE date = DATE('now')").fetchone()[0]
+    return jsonify({"total_visits": total, "unique_visitors": unique, "today_unique": today_unique})
 
 @app.route("/api/courses")
 def api_courses():
@@ -74,7 +117,6 @@ def api_courses():
 
     sql += " GROUP BY c.id ORDER BY c.departement, c.titre"
 
-    # Context manager pour auto-close la DB
     with get_db() as conn:
         rows = conn.execute(sql, params).fetchall()
         depts = [r[0] for r in conn.execute("SELECT DISTINCT departement FROM courses WHERE departement != '' AND departement IS NOT NULL ORDER BY departement").fetchall()]
